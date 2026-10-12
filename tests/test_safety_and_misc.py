@@ -146,3 +146,25 @@ def test_web_refuses_remote_bind():
     from interface.web import serve
     with pytest.raises(SystemExit):
         serve(Settings(), Database(":memory:"), host="0.0.0.0")
+
+
+def test_validation_status_fail_closed_and_roundtrip(tmp_path):
+    from backtest.validation import write_validation_status
+    from config import read_validation_status
+    assert read_validation_status(tmp_path / "absent.json")["passed"] is False
+    bad = tmp_path / "bad.json"
+    bad.write_text("{oops")
+    assert read_validation_status(bad)["passed"] is False
+    rep = {"label": "OOS", "trades": 150, "winrate": 0.5, "expectancy_r": 0.2, "max_drawdown_pct": 10,
+           "validation": {"passed": True, "criteria": {"x": True}}}
+    write_validation_status(rep, source="t.csv", params={}, path=tmp_path / "v.json")
+    assert read_validation_status(tmp_path / "v.json")["passed"] is True
+
+
+def test_live_run_requires_interactive_confirmation(monkeypatch):
+    import main
+    s = Settings(capital_env="live", dry_run=False, kill_switch=False)
+    monkeypatch.setattr("sys.stdin.isatty", lambda: False, raising=False)
+    with pytest.raises(SystemExit):
+        main.confirm_live_interactively(s)
+    main.confirm_live_interactively(Settings())   # DRY_RUN : aucune question

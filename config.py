@@ -19,6 +19,20 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 
 # Phrase exacte exigée pour autoriser un ordre réel (CAPITAL_ENV=live et DRY_RUN=false).
 LIVE_ACK_PHRASE = "J_ACCEPTE_LE_RISQUE_REEL"
+# Phrase exigée EN PLUS pour trader en réel une stratégie dont le backtest n'est pas validé.
+LIVE_UNVALIDATED_PHRASE = "J_ACCEPTE_UNE_STRATEGIE_NON_VALIDEE"
+VALIDATION_STATUS_PATH = "var/validation_status.json"
+
+
+def read_validation_status(path: str | os.PathLike[str] | None = None) -> dict[str, Any]:
+    """Statut de validation écrit par le backtest. Absent/illisible → non validé (fail-closed)."""
+    import json
+    p = Path(path) if path else PROJECT_ROOT / VALIDATION_STATUS_PATH
+    try:
+        data = json.loads(p.read_text())
+        return data if isinstance(data, dict) else {"passed": False}
+    except (OSError, ValueError):
+        return {"passed": False, "reason": "aucun statut de validation (lancer le backtest)"}
 
 
 class ConfigError(ValueError):
@@ -142,6 +156,8 @@ class Settings:
     auto_trading: bool = False
     mode: Mode = Mode.MANUAL_APPROVAL
     live_trading_ack: str = ""
+    live_override_unvalidated: str = ""
+    validation_passed: bool = False   # lu depuis var/validation_status.json
 
     # --- Broker ---
     capital_env: str = "demo"   # demo | live
@@ -241,11 +257,15 @@ class Settings:
             reasons.append("Mode AUTO demandé mais AUTO_TRADING=false")
         if self.capital_env == "live" and not self.dry_run and self.live_trading_ack != LIVE_ACK_PHRASE:
             reasons.append("Compte réel : LIVE_TRADING_ACK absent ou incorrect")
+        if (self.capital_env == "live" and not self.dry_run and not self.validation_passed
+                and self.live_override_unvalidated != LIVE_UNVALIDATED_PHRASE):
+            reasons.append("Compte réel : stratégie NON validée par le backtest "
+                           "(LIVE_OVERRIDE_UNVALIDATED absent ou incorrect)")
         return (not reasons, reasons)
 
     def public_dict(self) -> dict[str, Any]:
         hidden = {"capital_api_key", "capital_identifier", "capital_password",
-                  "telegram_bot_token", "telegram_chat_id", "live_trading_ack"}
+                  "telegram_bot_token", "telegram_chat_id", "live_trading_ack", "live_override_unvalidated"}
         out: dict[str, Any] = {}
         for f in fields(self):
             if f.name in hidden:
@@ -340,6 +360,8 @@ def load_settings(env_file: str | os.PathLike[str] | None = None, *, load_dotenv
         auto_trading=_bool("AUTO_TRADING", False),
         mode=mode,
         live_trading_ack=_env("LIVE_TRADING_ACK", "") or "",
+        live_override_unvalidated=_env("LIVE_OVERRIDE_UNVALIDATED", "") or "",
+        validation_passed=bool(read_validation_status().get("passed", False)),
         capital_env=(_env("CAPITAL_ENV", "demo") or "demo").lower(),
         capital_api_key=_env("CAPITAL_API_KEY", "") or "",
         capital_identifier=_env("CAPITAL_IDENTIFIER", "") or "",

@@ -53,3 +53,18 @@
    - `LIVE_TRADING_ACK=J_ACCEPTE_LE_RISQUE_REEL`
    - inchangés : `MODE=MANUAL_APPROVAL`, `MANUAL_APPROVAL_REQUIRED=true`, `AUTO_TRADING=false`,
      risque min(100 CHF, 1 %), 2 trades/jour, 1 position, perte journalière max.
+
+## Profil compte réel (outillage prêt, NON activé)
+
+- `.env.live.example` : profil réel pré-rempli (`CAPITAL_ENV=live`, `DRY_RUN=false`, `KILL_SWITCH=false`,
+  `LIVE_TRADING_ACK`). Les protections restent inchangées.
+- `python main.py go-live-check` : affiche **exactement** ce qui sera activé, le statut de validation,
+  le forward test DRY_RUN, les trades démo, puis vérifie l'API (devise du compte, instrument,
+  positions ouvertes, hedgingMode). Rend un verdict GO / NO-GO. Cette commande n'active rien.
+- **Porte de validation** : tant que `var/validation_status.json` (écrit par `main.py backtest`)
+  n'indique pas `passed: true`, les ordres réels sont refusés, sauf si **vous** ajoutez
+  `LIVE_OVERRIDE_UNVALIDATED=J_ACCEPTE_UNE_STRATEGIE_NON_VALIDEE`. Une formulation approchante est
+  refusée (testé).
+- **Confirmation au démarrage** : avec des ordres réels, `python main.py run` affiche la liste des
+  activations et exige de taper `ORDRES REELS` dans un terminal interactif.
+- Ensuite, chaque trade exige toujours `APPROVE <id>` et une revérification complète.

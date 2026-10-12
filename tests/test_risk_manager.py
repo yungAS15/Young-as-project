@@ -128,8 +128,22 @@ def test_live_requires_ack_phrase():
     s = unlocked_settings(capital_env="live", dry_run=False)
     d = RiskManager(s).evaluate(ctx(), "execution")
     assert "execution_guard" in failed_names(d)
-    s2 = replace(s, live_trading_ack=LIVE_ACK_PHRASE)
+    s2 = replace(s, live_trading_ack=LIVE_ACK_PHRASE, validation_passed=True)
     assert RiskManager(s2).evaluate(ctx(), "execution").approved
+
+
+def test_live_unvalidated_strategy_requires_second_phrase():
+    from config import LIVE_UNVALIDATED_PHRASE
+    s = unlocked_settings(capital_env="live", dry_run=False, live_trading_ack=LIVE_ACK_PHRASE, validation_passed=False)
+    d = RiskManager(s).evaluate(ctx(), "execution")
+    assert "execution_guard" in failed_names(d)
+    assert any("NON validée" in c.detail for c in d.failed)
+    s2 = replace(s, live_override_unvalidated="oui")          # formulation approximative refusée
+    assert not RiskManager(s2).evaluate(ctx(), "execution").approved
+    s3 = replace(s, live_override_unvalidated=LIVE_UNVALIDATED_PHRASE)
+    assert RiskManager(s3).evaluate(ctx(), "execution").approved
+    # démo et DRY_RUN ne sont pas concernés
+    assert RiskManager(replace(s, capital_env="demo")).evaluate(ctx(), "execution").approved
 
 
 def test_internal_error_is_no_trade():

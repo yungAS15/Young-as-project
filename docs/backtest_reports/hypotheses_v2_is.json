@@ -1,0 +1,67 @@
+{
+ "rule": {
+  "v1_is_expectancy": -0.181,
+  "min_gain_r": 0.1,
+  "min_is_trades": 80
+ },
+ "is": {
+  "H1": {
+   "trades": 174,
+   "winrate": 0.26436781609195403,
+   "expectancy_r": -0.09871140494984561,
+   "profit_factor": 0.8515712257954864,
+   "max_dd_pct": 23.42899655999895,
+   "ci95": [
+    -0.329,
+    0.139
+   ],
+   "retained": false
+  },
+  "H2": {
+   "trades": 143,
+   "winrate": 0.2517482517482518,
+   "expectancy_r": -0.21230279538309607,
+   "profit_factor": 0.718736676746058,
+   "max_dd_pct": 28.80099140069034,
+   "ci95": [
+    -0.437,
+    0.022
+   ],
+   "retained": false
+  },
+  "H3": {
+   "trades": 79,
+   "winrate": 0.20253164556962025,
+   "expectancy_r": -0.272062980526974,
+   "profit_factor": 0.6591875488762289,
+   "max_dd_pct": 24.178799566682198,
+   "ci95": [
+    -0.598,
+    0.084
+   ],
+   "retained": false
+  },
+  "H4": {
+   "trades": 167,
+   "winrate": 0.2754491017964072,
+   "expectancy_r": -0.10848099676177418,
+   "profit_factor": 0.833419267914498,
+   "max_dd_pct": 20.835518559996952,
+   "ci95": [
+    -0.328,
+    0.118
+   ],
+   "retained": false
+  },
+  "H5": {
+   "trades": 1,
+   "winrate": 0.0,
+   "expectancy_r": -1.0197368421052253,
+   "profit_factor": 0.0,
+   "max_dd_pct": 1.0196519999999691,
+   "ci95": null,
+   "retained": false
+  }
+ },
+ "kept_params": {}
+}

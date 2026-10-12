@@ -248,6 +248,10 @@ class CapitalClient:
         self._request("GET", "/api/v1/ping")
         return True
 
+    def get_preferences(self) -> dict[str, Any]:
+        """GET /accounts/preferences : mode hedging et leviers (lecture seule)."""
+        return dict(self._request("GET", "/api/v1/accounts/preferences"))
+
     def get_accounts(self) -> list[AccountInfo]:
         data = self._request("GET", "/api/v1/accounts")
         out = []

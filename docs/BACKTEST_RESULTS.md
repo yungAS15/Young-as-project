@@ -117,3 +117,26 @@ n'a pas d'avantage exploitable sur l'or M1/M15 avec ces coûts**.
 L'infrastructure ne dépend pas de la stratégie : risque, approbation, exécution vérifiée, journal,
 backtest sans lookahead et métriques par score. Elle sert à tester rigoureusement toute autre
 version de la stratégie.
+
+## Hypothèses v2 : résultat du test pré-enregistré (2026-10-12)
+
+Protocole : [HYPOTHESES_V2.md](HYPOTHESES_V2.md), commité **avant** l'exécution. Chaque hypothèse
+est testée sur l'IS 2018–2022. Référence v1 : 219 trades, −0,181 R. Seuil de rétention :
+amélioration d'au moins +0,10 R et au moins 80 trades.
+
+| Hypothèse | Trades IS | Winrate | Expectancy IS | IC 95 % | Retenue ? |
+|---|---|---|---|---|---|
+| H1 confirmation M15 | 174 | 26,4 % | −0,099 R | [−0,33 ; +0,14] | non (+0,08 R < +0,10) |
+| H2 sweep significatif obligatoire | 143 | 25,2 % | −0,212 R | [−0,44 ; +0,02] | non (pire) |
+| H3 H4 strict + D1 haussier | 79 | 20,3 % | −0,272 R | [−0,60 ; +0,08] | non (pire) |
+| H4 ordre limite à 0,705 | 167 | 27,5 % | −0,108 R | [−0,33 ; +0,12] | non (+0,07 R < +0,10) |
+| H5 TP sur la première liquidité | 1 | — | — | — | non (la 1re liquidité n'offre presque jamais 2R) |
+
+**Aucune hypothèse n'est retenue. Il n'y a donc pas de version v2 à tester hors échantillon.**
+H1 et H4 vont dans le bon sens, mais restent négatives et sous le seuil fixé à l'avance. Abaisser
+le seuil après coup, ou les passer sur l'OOS « pour voir », serait de la sur-optimisation.
+Les options restent disponibles dans la configuration (désactivées), pour un futur test sur de
+nouvelles données.
+
+Statut de validation (`var/validation_status.json`) : **NON VALIDÉ**. Le meilleur résultat obtenu
+est l'OOS v1 2023+ : +0,08 R, non significatif, avec un winrate de 33,5 % hors de la plage 45–65 %.

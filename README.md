@@ -25,6 +25,10 @@ AUTO_TRADING=false
 CAPITAL_ENV=demo
 ```
 
+Profil compte réel prêt à l'emploi : `.env.live.example`. Lancez `python main.py go-live-check` pour
+la liste exacte de ce qui sera activé et le verdict GO/NO-GO. La stratégie n'étant pas validée, les
+ordres réels restent refusés sans la ligne `LIVE_OVERRIDE_UNVALIDATED` (voir docs/SECURITY.md).
+
 Un ordre **réel** exige en plus `CAPITAL_ENV=live`, `DRY_RUN=false`, `KILL_SWITCH=false` **et**
 `LIVE_TRADING_ACK=J_ACCEPTE_LE_RISQUE_REEL`. Voir [docs/SECURITY.md](docs/SECURITY.md) pour la
 checklist complète de passage en réel — à ne suivre **qu'après** validation backtest + forward test.

@@ -181,6 +181,12 @@ def cmd_backtest(args) -> None:
     print(format_report(is_res.report))
     print()
     print(format_report(oos_res.report))
+    if not args.no_status and not args.start and not args.end:
+        from dataclasses import asdict
+        from backtest.validation import write_validation_status
+        st = write_validation_status(oos_res.report, source=args.csv, params=asdict(s.strategy))
+        print(f"\nStatut de validation enregistré (var/validation_status.json) : "
+              f"{'VALIDÉ' if st['passed'] else 'NON VALIDÉ'}")
     if args.trades:
         for t in is_res.trades + oos_res.trades:
             print(f"{t.entry_time:%Y-%m-%d %H:%M} entry {t.entry:.2f} SL {t.stop_loss:.2f} TP {t.take_profit:.2f} "
@@ -210,10 +216,106 @@ def cmd_analyze(args) -> None:
     c.logout()
 
 
+LIVE_ACTIVATIONS = [
+    ("CAPITAL_ENV", "live", "compte RÉEL (https://api-capital.backend-capital.com)"),
+    ("DRY_RUN", "false", "les ordres sont réellement envoyés au broker"),
+    ("KILL_SWITCH", "false", "l'exécution est autorisée"),
+    ("LIVE_TRADING_ACK", "J_ACCEPTE_LE_RISQUE_REEL", "accusé de risque réel"),
+]
+LIVE_UNCHANGED = [
+    ("MODE", "MANUAL_APPROVAL"), ("MANUAL_APPROVAL_REQUIRED", "true"), ("AUTO_TRADING", "false"),
+    ("ALLOWED_EPICS", "GOLD"), ("ALLOWED_DIRECTIONS", "BUY"), ("MAX_RISK_PER_TRADE_CHF", "100"),
+    ("MAX_RISK_PER_TRADE_PCT", "1.0"), ("MAX_TRADES_PER_DAY", "2"), ("MAX_OPEN_POSITIONS", "1"),
+]
+
+
+def live_activation_text(s: Settings) -> str:
+    from config import LIVE_UNVALIDATED_PHRASE, read_validation_status
+    vs = read_validation_status()
+    lines = ["CE QUI SERA ACTIVÉ POUR LE COMPTE RÉEL :"]
+    lines += [f"  {k}={v:<28} → {why}" for k, v, why in LIVE_ACTIVATIONS]
+    if not vs.get("passed"):
+        lines.append(f"  LIVE_OVERRIDE_UNVALIDATED={LIVE_UNVALIDATED_PHRASE} → trader une stratégie NON validée")
+    lines.append("INCHANGÉ (protections) :")
+    lines += [f"  {k}={v}" for k, v in LIVE_UNCHANGED]
+    lines.append(f"  perte journalière max = min({s.max_daily_loss_chf:g} CHF, {s.max_daily_loss_pct:g} %) ; "
+                 f"spread max {s.max_spread_points:g} ; approbation APPROVE <id> à chaque trade")
+    lines.append("STATUT DE VALIDATION BACKTEST : " + ("VALIDÉ" if vs.get("passed") else "NON VALIDÉ")
+                 + (f" ({vs.get('trades')} trades, expectancy {vs.get('expectancy_r') or 0:+.3f} R, "
+                    f"winrate {(vs.get('winrate') or 0):.1%})" if "trades" in vs
+                    else f" ({vs.get('reason', '')})"))
+    return "\n".join(lines)
+
+
+def cmd_go_live_check(args) -> None:
+    """Liste précise de ce qui serait activé + vérifications. N'active RIEN."""
+    import statistics
+    from config import read_validation_status
+    s = _settings()
+    print(live_activation_text(s))
+    vs = read_validation_status()
+    go = bool(vs.get("passed"))
+    db = _db(s)
+    fw = [t for t in db.iter_closed_trades() if t["mode"] == "DRY_RUN"]
+    demo = [t for t in db.iter_closed_trades() if t["mode"] == "DEMO"]
+    print(f"\nFORWARD TEST DRY_RUN : {len(fw)} trades clôturés", end="")
+    if fw:
+        rs = [t["r_multiple"] or 0.0 for t in fw]
+        print(f" depuis {fw[0]['opened_at'][:10]}, expectancy {statistics.mean(rs):+.2f} R", end="")
+    print(f"\nTEST D'EXÉCUTION DÉMO : {len(demo)} trades clôturés")
+    if len(fw) < 20:
+        print("  ! forward test insuffisant (recommandé : plusieurs semaines, ≥ 20 trades)")
+        go = False
+    if not demo:
+        print("  ! aucun ordre exécuté sur compte démo : SL/TP attachés et P&L en CHF non vérifiés")
+        go = False
+    if s.has_credentials:
+        try:
+            c = _client(s)
+            info = c.login()
+            print(f"\nCONNEXION {s.capital_env.upper()} OK — devise du compte {info['account_currency']}")
+            if info["account_currency"] != s.account_currency:
+                print(f"  ! devise {info['account_currency']} ≠ ACCOUNT_CURRENCY={s.account_currency}")
+                go = False
+            inst = c.get_instrument(s.allowed_epics[0])
+            amb = inst.ambiguities()
+            print(f"  instrument {inst.epic} : min {inst.min_deal_size:g}, pas {inst.size_increment:g}, "
+                  f"lotSize {inst.lot_size:g}, statut {inst.market_status}" + (f" ; AMBIGU : {amb}" if amb else ""))
+            go = go and not amb
+            pos = c.get_positions()
+            print(f"  positions ouvertes : {len(pos)}")
+            prefs = c.get_preferences()
+            print(f"  hedgingMode : {prefs.get('hedgingMode')}")
+            c.logout()
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ! vérification API impossible : {exc}")
+            go = False
+    else:
+        print("\n  ! identifiants absents : vérifications API non faites")
+        go = False
+    print("\nVERDICT : " + ("GO technique (confirmation écrite requise)" if go else
+                            "NO-GO — conditions de passage en réel non remplies"))
+
+
+def confirm_live_interactively(s: Settings) -> None:
+    """Dernière barrière humaine au démarrage avec ordres réels."""
+    if not (s.capital_env == "live" and not s.dry_run):
+        return
+    print("=" * 70)
+    print(live_activation_text(s))
+    print("=" * 70)
+    if not sys.stdin.isatty():
+        sys.exit("Refus : démarrage en réel uniquement depuis un terminal interactif.")
+    typed = input('Pour démarrer avec des ORDRES RÉELS, tapez exactement : ORDRES REELS\n> ')
+    if typed.strip() != "ORDRES REELS":
+        sys.exit("Confirmation absente : démarrage annulé.")
+
+
 def cmd_run(args) -> None:
     from interface.runner import BotRunner
     from monitoring.alerts import build_notifier
     s = _settings()
+    confirm_live_interactively(s)
     _logging(s)
     db = _db(s)
     c = _client(s)
@@ -296,7 +398,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--train-days", type=int, default=180)
     p.add_argument("--test-days", type=int, default=60)
     p.add_argument("--trades", action="store_true")
+    p.add_argument("--no-status", action="store_true", help="ne pas écrire var/validation_status.json")
     p.set_defaults(fn=cmd_backtest)
+    sub.add_parser("go-live-check").set_defaults(fn=cmd_go_live_check)
     sub.add_parser("analyze").set_defaults(fn=cmd_analyze)
     sub.add_parser("run").set_defaults(fn=cmd_run)
     sub.add_parser("web").set_defaults(fn=cmd_web)
