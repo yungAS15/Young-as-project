@@ -151,6 +151,7 @@ class StrategyParams:
 class Settings:
     # --- Sécurité / modes ---
     dry_run: bool = True
+    read_only: bool = True     # client API en lecture seule : aucun POST/PUT/DELETE (hors session)
     kill_switch: bool = True
     manual_approval_required: bool = True
     auto_trading: bool = False
@@ -255,6 +256,8 @@ class Settings:
             reasons.append("KILL_SWITCH actif")
         if self.mode == Mode.AUTO and not self.auto_trading:
             reasons.append("Mode AUTO demandé mais AUTO_TRADING=false")
+        if not self.dry_run and self.read_only:
+            reasons.append("READ_ONLY=true : client API en lecture seule, aucun ordre possible")
         if self.capital_env == "live" and not self.dry_run and self.live_trading_ack != LIVE_ACK_PHRASE:
             reasons.append("Compte réel : LIVE_TRADING_ACK absent ou incorrect")
         if (self.capital_env == "live" and not self.dry_run and not self.validation_passed
@@ -293,6 +296,9 @@ class Settings:
             raise ConfigError("MAX_OPEN_POSITIONS doit valoir 1")
         if self.strategy.min_rr < 2.0:
             raise ConfigError("MIN_RR < 2 refusé")
+        if self.capital_env == "live" and (self.mode == Mode.AUTO or self.auto_trading
+                                          or not self.manual_approval_required):
+            raise ConfigError("Compte réel : validation manuelle obligatoire (MODE=AUTO / AUTO_TRADING refusés)")
         if self.mode == Mode.AUTO and self.manual_approval_required:
             raise ConfigError("Mode AUTO incompatible avec MANUAL_APPROVAL_REQUIRED=true")
         if self.mode != Mode.AUTO and not self.manual_approval_required:
@@ -355,6 +361,7 @@ def load_settings(env_file: str | os.PathLike[str] | None = None, *, load_dotenv
     )
     s = Settings(
         dry_run=_bool("DRY_RUN", True),
+        read_only=_bool("READ_ONLY", True),
         kill_switch=_bool("KILL_SWITCH", True),
         manual_approval_required=_bool("MANUAL_APPROVAL_REQUIRED", True),
         auto_trading=_bool("AUTO_TRADING", False),

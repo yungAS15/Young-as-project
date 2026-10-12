@@ -33,6 +33,13 @@ Un ordre **réel** exige en plus `CAPITAL_ENV=live`, `DRY_RUN=false`, `KILL_SWIT
 `LIVE_TRADING_ACK=J_ACCEPTE_LE_RISQUE_REEL`. Voir [docs/SECURITY.md](docs/SECURITY.md) pour la
 checklist complète de passage en réel — à ne suivre **qu'après** validation backtest + forward test.
 
+## Depuis un iPhone : connexion LIVE en lecture seule
+
+Voir [docs/GUIDE_IPHONE_LIVE.md](docs/GUIDE_IPHONE_LIVE.md). Les identifiants sont saisis dans les
+variables de l'environnement cloud, jamais dans la conversation. Ensuite :
+`bash scripts/setup_cloud.sh && .venv/bin/python main.py live-check`. Le client est en lecture seule
+(`READ_ONLY=true` par défaut) : aucun ordre ne peut partir.
+
 ## Installation (MacBook, macOS, zsh)
 
 Vérifier d'abord ce qui est installé :

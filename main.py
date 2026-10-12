@@ -297,6 +297,83 @@ def cmd_go_live_check(args) -> None:
                             "NO-GO — conditions de passage en réel non remplies"))
 
 
+def cmd_live_check(args) -> None:
+    """Test de connexion LECTURE SEULE (aucun ordre possible, quelle que soit la configuration)."""
+    import os
+    from dataclasses import replace
+    from broker.capital_api import build_client
+    from risk.position_sizing import allowed_risk, compute_position_size
+    from risk.risk_manager import RiskManager
+    from strategy.indicators import atr
+    s = _settings()
+    print(f"Environnement : {s.capital_env.upper()} — {s.base_url}")
+    print("Variables (valeurs jamais affichées) :")
+    missing = []
+    for name in ("CAPITAL_API_KEY", "CAPITAL_IDENTIFIER", "CAPITAL_PASSWORD"):
+        ok = bool(os.environ.get(name, "").strip())
+        print(f"  {name:<20} {'présente' if ok else 'ABSENTE'}")
+        if not ok:
+            missing.append(name)
+    if missing:
+        sys.exit("Identifiants incomplets : ajoutez les variables manquantes dans les réglages de l'environnement.")
+    print(f"Sécurité : READ_ONLY={s.read_only} DRY_RUN={s.dry_run} KILL_SWITCH={s.kill_switch} "
+          f"MODE={s.mode.value} (ce test force de toute façon la lecture seule)")
+    s_ro = replace(s, read_only=True)
+    c = build_client(s_ro)
+    assert c.read_only
+    _logging(s_ro)
+    print(f"Heure serveur : {c.server_time()}")
+    info = c.login()
+    print("✔ Authentification réussie")
+    acct = c.get_current_account()
+    print(f"Compte ***{acct.account_id[-4:]} — devise {acct.currency}")
+    print(f"  Solde {acct.balance:.2f} | Disponible {acct.available:.2f} | P&L latent {acct.profit_loss:+.2f}")
+    if acct.currency != s.account_currency:
+        print(f"  ! Devise {acct.currency} ≠ ACCOUNT_CURRENCY={s.account_currency} → le bot refusera de trader")
+    inst = c.get_instrument(s.allowed_epics[0])
+    q = c.get_quote(s.allowed_epics[0])
+    print(f"Instrument {inst.epic} ({inst.name}) : statut {inst.market_status}, devise {inst.currency}, "
+          f"taille min {inst.min_deal_size:g}, pas {inst.size_increment:g}, lotSize {inst.lot_size:g}")
+    print(f"  Prix bid {q.bid:.2f} / ask {q.offer:.2f} — spread {q.spread:.2f} (max accepté {s.max_spread_points:g})")
+    amb = inst.ambiguities()
+    if amb:
+        print("  ! Ambiguïtés → NO TRADE : " + "; ".join(amb))
+    from data.market_data import MarketDataService
+    fx = MarketDataService(c, s_ro).fx_rate(inst.currency)
+    print(f"Taux {inst.currency}→{s.account_currency} : {fx if fx else 'INDISPONIBLE → NO TRADE'}")
+    pos = c.get_positions()
+    print(f"Positions ouvertes : {len(pos)}")
+    try:
+        print(f"Mode hedging : {c.get_preferences().get('hedgingMode')}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"Préférences illisibles : {exc}")
+
+    print("\nGESTION DU RISQUE ADAPTÉE AU CAPITAL DISPONIBLE")
+    cap = acct.available
+    r_allowed = allowed_risk(cap, s.max_risk_per_trade_chf, s.max_risk_per_trade_pct)
+    print(f"  Risque max par trade = min({s.max_risk_per_trade_chf:g} CHF, {s.max_risk_per_trade_pct:g} % × {cap:.2f}) "
+          f"= {r_allowed:.2f} {s.account_currency}")
+    print(f"  Perte journalière max = {RiskManager(s).daily_loss_limit(cap):.2f} {s.account_currency}, "
+          f"{s.max_trades_per_day} trades/jour, {s.max_open_positions} position max")
+    m15 = c.get_candles(inst.epic, "M15", max_bars=100)
+    a = atr(m15, 14)
+    if a and fx:
+        for mult in (1.0, 2.0, 3.0):
+            dist = mult * a
+            r = compute_position_size(
+                entry=q.offer, stop_loss=q.offer - dist, capital_available=cap, max_risk_ccy=s.max_risk_per_trade_chf,
+                max_risk_pct=s.max_risk_per_trade_pct, value_per_point=inst.value_per_point, quote_to_account_rate=fx,
+                min_size=inst.min_deal_size, max_size=inst.max_deal_size, size_step=inst.size_increment,
+                slippage_buffer=s.sl_slippage_buffer_points)
+            verdict = (f"taille {r.size:g} → risque {r.risk_effective:.2f} {s.account_currency} "
+                       f"({r.risk_pct_of_capital:.2f} %)" if r.ok else f"NO TRADE ({r.reason})")
+            print(f"  SL à {dist:5.2f} USD ({mult:g}×ATR M15) : {verdict}")
+    else:
+        print("  Calcul d'exemple impossible (ATR ou taux de change indisponible)")
+    c.logout()
+    print("\n✔ Test terminé. Aucun ordre envoyé (client en lecture seule).")
+
+
 def confirm_live_interactively(s: Settings) -> None:
     """Dernière barrière humaine au démarrage avec ordres réels."""
     if not (s.capital_env == "live" and not s.dry_run):
@@ -401,6 +478,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--no-status", action="store_true", help="ne pas écrire var/validation_status.json")
     p.set_defaults(fn=cmd_backtest)
     sub.add_parser("go-live-check").set_defaults(fn=cmd_go_live_check)
+    sub.add_parser("live-check", help="test de connexion et de solde en lecture seule").set_defaults(fn=cmd_live_check)
     sub.add_parser("analyze").set_defaults(fn=cmd_analyze)
     sub.add_parser("run").set_defaults(fn=cmd_run)
     sub.add_parser("web").set_defaults(fn=cmd_web)

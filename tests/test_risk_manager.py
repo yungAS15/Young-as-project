@@ -125,7 +125,7 @@ def test_macro_pause_fail_closed():
 
 
 def test_live_requires_ack_phrase():
-    s = unlocked_settings(capital_env="live", dry_run=False)
+    s = unlocked_settings(capital_env="live", dry_run=False, read_only=False)
     d = RiskManager(s).evaluate(ctx(), "execution")
     assert "execution_guard" in failed_names(d)
     s2 = replace(s, live_trading_ack=LIVE_ACK_PHRASE, validation_passed=True)
@@ -134,7 +134,8 @@ def test_live_requires_ack_phrase():
 
 def test_live_unvalidated_strategy_requires_second_phrase():
     from config import LIVE_UNVALIDATED_PHRASE
-    s = unlocked_settings(capital_env="live", dry_run=False, live_trading_ack=LIVE_ACK_PHRASE, validation_passed=False)
+    s = unlocked_settings(capital_env="live", dry_run=False, read_only=False, live_trading_ack=LIVE_ACK_PHRASE,
+                          validation_passed=False)
     d = RiskManager(s).evaluate(ctx(), "execution")
     assert "execution_guard" in failed_names(d)
     assert any("NON validée" in c.detail for c in d.failed)

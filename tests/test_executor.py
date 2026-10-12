@@ -187,7 +187,7 @@ def test_price_drift_expires_approval():
 
 def live_settings(**kw):
     from config import LIVE_ACK_PHRASE
-    return unlocked_settings(dry_run=False, capital_env="demo", **kw)
+    return unlocked_settings(dry_run=False, read_only=False, capital_env="demo", **kw)
 
 
 def test_real_order_path_verified():
@@ -199,7 +199,7 @@ def test_real_order_path_verified():
 
 
 def test_live_account_requires_ack():
-    ex, db, am, _, client = make(settings=unlocked_settings(dry_run=False, capital_env="live"))
+    ex, db, am, _, client = make(settings=unlocked_settings(dry_run=False, read_only=False, capital_env="live"))
     res = ex.execute(approved(am))
     assert not res.ok and "LIVE_TRADING_ACK" in res.message
     assert client.orders == []
@@ -241,3 +241,10 @@ def test_dry_run_monitor_closes_on_sl_and_updates_daily_pnl():
     t = db.trades()[0]
     assert t["status"] == "CLOSED" and t["exit_reason"] == "SL" and t["pnl_ccy"] < 0
     assert db.daily()["realized_pnl"] == pytest.approx(t["pnl_ccy"])
+
+
+def test_read_only_setting_blocks_real_execution():
+    ex, db, am, _, client = make(settings=unlocked_settings(dry_run=False, capital_env="demo"))   # READ_ONLY par défaut
+    res = ex.execute(approved(am))
+    assert not res.ok and "READ_ONLY" in res.message
+    assert client.orders == []

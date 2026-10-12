@@ -92,12 +92,16 @@ class CapitalClient:
         password: str,
         *,
         allowed_epics: tuple[str, ...] = ("GOLD",),
+        read_only: bool = True,
         timeout_s: float = 10.0,
         max_retries: int = 2,
         http: requests.Session | None = None,
         sleep: Callable[[float], None] = time.sleep,
     ):
         self.base_url = base_url.rstrip("/")
+        # Lecture seule (défaut) : toute requête autre que GET est refusée AVANT l'envoi,
+        # sauf l'ouverture/fermeture de session. Aucun ordre ne peut partir.
+        self.read_only = read_only
         self._api_key = api_key
         self._identifier = identifier
         self._password = password
@@ -185,6 +189,8 @@ class CapitalClient:
     def _request(self, method: str, path: str, *, params: dict[str, Any] | None = None,
                  json: dict[str, Any] | None = None, retry_auth: bool = True,
                  is_order: bool = False) -> Any:
+        if self.read_only and method != "GET" and path != "/api/v1/session":
+            raise CapitalAPIError(f"Client en LECTURE SEULE : {method} {path} bloqué (READ_ONLY=true)")
         self.ensure_session()
         attempt = 0
         while True:
@@ -477,4 +483,5 @@ def build_client(settings: Any) -> CapitalClient:
     return CapitalClient(
         settings.base_url, settings.capital_api_key, settings.capital_identifier, settings.capital_password,
         allowed_epics=settings.allowed_epics, timeout_s=settings.http_timeout_s,
+        read_only=settings.read_only,
     )

@@ -68,6 +68,7 @@ LOGIN_OK = Resp(200, {"currencyIsoCode": "CHF", "currentAccountId": "ACC123456"}
 
 
 def client(http, **kw):
+    kw.setdefault("read_only", False)   # les tests d'ordres exercent le chemin d'écriture
     return CapitalClient("https://demo-api-capital.backend-capital.com", "APIKEY-SECRET", "me@mail.com",
                          "PASSWORD-SECRET", http=http, sleep=lambda s: None, **kw)
 
@@ -198,3 +199,22 @@ def test_parse_prices_bid_and_spread():
     cs = CapitalClient.parse_prices(data)
     assert cs[0].close == 1.5 and cs[0].spread == pytest.approx(0.4) and cs[0].volume == 42
     assert cs[0].time.tzinfo is not None
+
+
+def test_read_only_blocks_every_write_before_sending():
+    http = FakeHTTP()
+    http.add("POST", "/api/v1/session", LOGIN_OK)
+    http.add("GET", "/api/v1/positions", Resp(200, {"positions": []}))
+    c = client(http, read_only=True)
+    assert c.get_positions() == []          # lecture autorisée
+    for call in (lambda: c.open_position("GOLD", "BUY", 0.5, 3990.0, 4020.0),
+                 lambda: c.close_position("D1"),
+                 lambda: c.update_position("D1", stop_level=1.0)):
+        with pytest.raises(CapitalAPIError, match="LECTURE SEULE"):
+            call()
+    assert not any(m in ("PUT", "DELETE") or p == "/api/v1/positions" and m == "POST"
+                   for m, p, _ in http.calls)
+
+
+def test_read_only_is_default():
+    assert CapitalClient("https://x.com", "k", "i", "p", http=FakeHTTP()).read_only

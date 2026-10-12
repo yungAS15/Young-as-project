@@ -11,7 +11,7 @@ from monitoring.logger import SecretFilter
 from monitoring.macro_calendar import MacroEvent, blackout, load_events
 from tests.scenario import h4_bullish, m15_series
 
-SAFE_ENV_KEYS = ["DRY_RUN", "KILL_SWITCH", "MANUAL_APPROVAL_REQUIRED", "AUTO_TRADING", "MODE", "CAPITAL_ENV",
+SAFE_ENV_KEYS = ["READ_ONLY", "DRY_RUN", "KILL_SWITCH", "MANUAL_APPROVAL_REQUIRED", "AUTO_TRADING", "MODE", "CAPITAL_ENV",
                  "MAX_TRADES_PER_DAY", "MIN_RR", "MAX_RISK_PER_TRADE_PCT"]
 
 
@@ -168,3 +168,13 @@ def test_live_run_requires_interactive_confirmation(monkeypatch):
     with pytest.raises(SystemExit):
         main.confirm_live_interactively(s)
     main.confirm_live_interactively(Settings())   # DRY_RUN : aucune question
+
+
+def test_live_account_forces_manual_approval(clean_env):
+    clean_env.setenv("CAPITAL_ENV", "live")
+    s = load_settings(load_dotenv_file=False)
+    assert s.read_only and s.dry_run and s.kill_switch and s.manual_approval_required
+    clean_env.setenv("MODE", "AUTO")
+    clean_env.setenv("MANUAL_APPROVAL_REQUIRED", "false")
+    with pytest.raises(ConfigError, match="validation manuelle obligatoire"):
+        load_settings(load_dotenv_file=False)
