@@ -7,6 +7,14 @@ prise de liquidité → CHOCH → zone OTE/FVG/OB → VWAP → confirmation M1.
 > ⚠️ Le trading avec effet de levier comporte un risque de perte élevé. Les résultats de backtest
 > ne garantissent pas les résultats futurs. Ce logiciel ne constitue pas un conseil en investissement.
 
+## Résultat actuel du backtest — à lire d'abord
+
+Sur 2018 → 09/2026 (XAU/USD M1, 404 trades, coûts inclus) : **winrate 29 %, profit factor 0,90,
+expectancy −0,06 R (IC 95 % [−0,20 ; +0,10]), drawdown max 40 %**. Hors échantillon 2023+ :
++0,08 R, non significatif. Le score n'est pas discriminant.
+**La stratégie n'a pas d'avantage statistique démontré → ne pas passer en réel.**
+Détails, méthode et ajustements proposés : [docs/BACKTEST_RESULTS.md](docs/BACKTEST_RESULTS.md).
+
 ## État de sécurité par défaut
 
 ```

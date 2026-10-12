@@ -55,7 +55,7 @@ def with_params(s: Settings, params: dict) -> Settings:
 
 
 def run_job(job: dict) -> dict:
-    s = with_params(base_settings(), job.get("params", {}))
+    s = with_params(base_settings(**job.get("settings", {})), job.get("params", {}))
     data = M1
     if job.get("spread"):
         data = [replace(c, spread=job["spread"]) for c in M1]
@@ -112,7 +112,9 @@ def main() -> None:
         oos_jobs = [
             {"label": "OOS défauts (pré-enregistrés)", "params": {}, "start": OOS_START, "end": end},
             {"label": "OOS meilleurs paramètres IS", "params": best, "start": OOS_START, "end": end},
-            {"label": "OOS défauts, spread 0.80", "params": {}, "start": OOS_START, "end": end, "spread": 0.80},
+            # plafond de spread relevé, sinon le Risk Manager bloque tout et le test ne mesure rien
+            {"label": "OOS défauts, spread 0.80", "params": {}, "start": OOS_START, "end": end, "spread": 0.80,
+             "settings": {"max_spread_points": 1.0}},
             {"label": "PÉRIODE COMPLÈTE défauts", "params": {}, "start": IS_START, "end": end},
         ]
         oos_res = pool.map(run_job, oos_jobs)

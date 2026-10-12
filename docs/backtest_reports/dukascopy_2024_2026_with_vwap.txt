@@ -1,0 +1,50 @@
+===== RAPPORT DE BACKTEST OUT-OF-SAMPLE 2024-01-02→2026-10-09 =====
+Trades : 140   Winrate : 32.9 %   Profit factor : 1.05
+Expectancy : +0.049 R / trade   RR moyen prévu : 2.39
+Gain moyen : +2.29 R   Perte moyenne : -1.05 R
+P&L net : +52.97   Capital : 1000.00 → 1052.97
+Drawdown max : 173.08 (15.0 %)   Série max de pertes : 8
+Par tranche de SCORE (le score est-il discriminant ?) :
+  7-7.9                              36 trades | winrate  36.1 % | expectancy +0.19 R | PF 1.28
+  8-8.9                              54 trades | winrate  33.3 % | expectancy +0.03 R | PF 1.02
+  9-10                               50 trades | winrate  30.0 % | expectancy -0.04 R | PF 0.93
+Par session (heure d'entrée) :
+  Asie / nuit (21-07 UTC)            62 trades | winrate  40.3 % | expectancy +0.31 R | PF 1.48
+  Londres (07-12 UTC)                37 trades | winrate  18.9 % | expectancy -0.47 R | PF 0.46
+  NY après-midi (17-21 UTC)          10 trades | winrate  80.0 % | expectancy +1.55 R | PF 8.88
+  New York / overlap (12-17 UTC)     31 trades | winrate  19.4 % | expectancy -0.32 R | PF 0.59
+Par type de setup :
+  FVG                                17 trades | winrate  52.9 % | expectancy +0.76 R | PF 2.46
+  FVG +VWAP                          16 trades | winrate  43.8 % | expectancy +0.45 R | PF 1.93
+  FVG+OB                              1 trades | winrate 100.0 % | expectancy +2.22 R | PF ∞
+  FVG+OB +VWAP                        2 trades | winrate   0.0 % | expectancy -1.01 R | PF 0.00
+  FVG+OB+OTE                          4 trades | winrate  25.0 % | expectancy -0.17 R | PF 0.76
+  FVG+OB+OTE +VWAP                   10 trades | winrate  40.0 % | expectancy +0.30 R | PF 1.40
+  FVG+OTE                             4 trades | winrate   0.0 % | expectancy -1.01 R | PF 0.00
+  FVG+OTE +VWAP                       6 trades | winrate  50.0 % | expectancy +0.59 R | PF 1.97
+  OB                                 22 trades | winrate  36.4 % | expectancy +0.19 R | PF 1.27
+  OB +VWAP                           26 trades | winrate  11.5 % | expectancy -0.79 R | PF 0.22
+  OB+OTE                             12 trades | winrate  16.7 % | expectancy -0.49 R | PF 0.43
+  OB+OTE +VWAP                       11 trades | winrate  54.5 % | expectancy +0.83 R | PF 2.73
+  OTE                                 3 trades | winrate   0.0 % | expectancy -1.01 R | PF 0.00
+  OTE +VWAP                           6 trades | winrate  33.3 % | expectancy +0.15 R | PF 1.23
+Par raison de sortie :
+  SL                                 93 trades | winrate   0.0 % | expectancy -1.01 R | PF 0.00
+  SL (gap)                            1 trades | winrate   0.0 % | expectancy -4.44 R | PF 0.00
+  TP                                 46 trades | winrate 100.0 % | expectancy +2.29 R | PF ∞
+Signaux M1 évalués : 142
+Principales raisons de NO TRADE :
+     243 × Setup expiré
+     106 × Aucun TP raisonnable n'offre RR ≥ # (meilleur #)
+      28 × Invalidé : M# sous le low du sweep
+      10 × SCORE #/# < minimum #
+       1 × RISK perte_journaliere: perte du jour # / limite #
+       1 × RISK taille: taille non calculable (capital/instrument/SL/budget)
+       1 × RISK trades_jour: #/# trades aujourd'hui
+Critères de validation avant réel :
+  [OK] au moins 100 trades
+  [OK] expectancy > 0 après coûts
+  [NON] winrate dans [45%, 65%]
+  [OK] drawdown max ≤ 20 %
+  → NON VALIDÉ
+AVERTISSEMENT : les performances passées (réelles ou simulées) ne garantissent pas les performances futures. Un backtest est une simulation avec des hypothèses de coûts et d'exécution ; le marché réel peut différer.

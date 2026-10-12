@@ -1,0 +1,262 @@
+===== RAPPORT DE BACKTEST IS défauts =====
+Trades : 219   Winrate : 25.6 %   Profit factor : 0.75
+Expectancy : -0.181 R / trade   RR moyen prévu : 2.40
+Gain moyen : +2.28 R   Perte moyenne : -1.03 R
+P&L net : -3331.75   Capital : 10000.00 → 6668.25
+Drawdown max : 3573.94 (35.7 %)   Série max de pertes : 23
+Par tranche de SCORE (le score est-il discriminant ?) :
+  7-7.9                              94 trades | winrate  30.9 % | expectancy +0.01 R | PF 0.96
+  8-8.9                              97 trades | winrate  19.6 % | expectancy -0.41 R | PF 0.50
+  9-10                               28 trades | winrate  28.6 % | expectancy -0.04 R | PF 1.06
+Par session (heure d'entrée) :
+  Asie / nuit (21-07 UTC)            86 trades | winrate  25.6 % | expectancy -0.18 R | PF 0.77
+  Londres (07-12 UTC)                53 trades | winrate  26.4 % | expectancy -0.13 R | PF 0.81
+  NY après-midi (17-21 UTC)          13 trades | winrate  15.4 % | expectancy -0.56 R | PF 0.36
+  New York / overlap (12-17 UTC)     67 trades | winrate  26.9 % | expectancy -0.15 R | PF 0.77
+Par type de setup :
+  FVG                                34 trades | winrate  20.6 % | expectancy -0.38 R | PF 0.51
+  FVG+OB                             13 trades | winrate  30.8 % | expectancy -0.01 R | PF 1.05
+  FVG+OB+OTE                         11 trades | winrate  36.4 % | expectancy +0.12 R | PF 1.30
+  FVG+OTE                            13 trades | winrate  30.8 % | expectancy +0.01 R | PF 0.98
+  OB                                 77 trades | winrate  24.7 % | expectancy -0.23 R | PF 0.64
+  OB+OTE                             50 trades | winrate  28.0 % | expectancy -0.05 R | PF 0.98
+  OTE                                21 trades | winrate  19.0 % | expectancy -0.37 R | PF 0.51
+Par raison de sortie :
+  FIN DE PÉRIODE                      1 trades | winrate 100.0 % | expectancy +0.75 R | PF ∞
+  SL                                163 trades | winrate   0.0 % | expectancy -1.03 R | PF 0.00
+  TP                                 54 trades | winrate 100.0 % | expectancy +2.29 R | PF ∞
+  TP (gap)                            1 trades | winrate 100.0 % | expectancy +3.25 R | PF ∞
+Signaux M1 évalués : 220
+Principales raisons de NO TRADE :
+     354 × Setup expiré
+     165 × Aucun TP raisonnable n'offre RR ≥ # (meilleur #)
+      40 × SCORE #/# < minimum #
+      39 × Invalidé : M# sous le low du sweep
+       1 × RISK rr_min: RR # (min #)
+Critères de validation avant réel :
+  [OK] au moins 100 trades
+  [NON] expectancy > 0 après coûts
+  [NON] winrate dans [45%, 65%]
+  [NON] drawdown max ≤ 20 %
+  → NON VALIDÉ
+AVERTISSEMENT : les performances passées (réelles ou simulées) ne garantissent pas les performances futures. Un backtest est une simulation avec des hypothèses de coûts et d'exécution ; le marché réel peut différer.
+
+===== RAPPORT DE BACKTEST OOS défauts (pré-enregistrés) =====
+Trades : 185   Winrate : 33.5 %   Profit factor : 1.14
+Expectancy : +0.084 R / trade   RR moyen prévu : 2.40
+Gain moyen : +2.32 R   Perte moyenne : -1.04 R
+P&L net : +1660.58   Capital : 10000.00 → 11660.58
+Drawdown max : 1711.36 (13.5 %)   Série max de pertes : 10
+Par tranche de SCORE (le score est-il discriminant ?) :
+  7-7.9                              78 trades | winrate  32.1 % | expectancy +0.02 R | PF 1.03
+  8-8.9                              87 trades | winrate  37.9 % | expectancy +0.25 R | PF 1.41
+  9-10                               20 trades | winrate  20.0 % | expectancy -0.36 R | PF 0.58
+Par session (heure d'entrée) :
+  Asie / nuit (21-07 UTC)            79 trades | winrate  36.7 % | expectancy +0.18 R | PF 1.26
+  Londres (07-12 UTC)                51 trades | winrate  25.5 % | expectancy -0.25 R | PF 0.64
+  NY après-midi (17-21 UTC)          10 trades | winrate  80.0 % | expectancy +1.61 R | PF 12.13
+  New York / overlap (12-17 UTC)     45 trades | winrate  26.7 % | expectancy -0.04 R | PF 1.04
+Par type de setup :
+  FVG                                40 trades | winrate  40.0 % | expectancy +0.34 R | PF 1.65
+  FVG+OB                              4 trades | winrate  50.0 % | expectancy +0.55 R | PF 1.60
+  FVG+OB+OTE                         16 trades | winrate  37.5 % | expectancy +0.21 R | PF 1.41
+  FVG+OTE                            15 trades | winrate  20.0 % | expectancy -0.37 R | PF 0.56
+  OB                                 60 trades | winrate  35.0 % | expectancy +0.10 R | PF 1.14
+  OB+OTE                             33 trades | winrate  36.4 % | expectancy +0.21 R | PF 1.31
+  OTE                                17 trades | winrate  11.8 % | expectancy -0.64 R | PF 0.29
+Par raison de sortie :
+  SL                                120 trades | winrate   0.0 % | expectancy -1.01 R | PF 0.00
+  SL (gap)                            3 trades | winrate   0.0 % | expectancy -2.22 R | PF 0.00
+  TP                                 62 trades | winrate 100.0 % | expectancy +2.32 R | PF ∞
+Signaux M1 évalués : 189
+Principales raisons de NO TRADE :
+     393 × Setup expiré
+     134 × Aucun TP raisonnable n'offre RR ≥ # (meilleur #)
+      36 × Invalidé : M# sous le low du sweep
+      20 × SCORE #/# < minimum #
+       2 × RISK rr_min: RR # (min #)
+       1 × RISK perte_journaliere: perte du jour # / limite #
+       1 × RISK taille: taille non calculable (capital/instrument/SL/budget)
+       1 × RISK trades_jour: #/# trades aujourd'hui
+Critères de validation avant réel :
+  [OK] au moins 100 trades
+  [OK] expectancy > 0 après coûts
+  [NON] winrate dans [45%, 65%]
+  [OK] drawdown max ≤ 20 %
+  → NON VALIDÉ
+AVERTISSEMENT : les performances passées (réelles ou simulées) ne garantissent pas les performances futures. Un backtest est une simulation avec des hypothèses de coûts et d'exécution ; le marché réel peut différer.
+
+===== RAPPORT DE BACKTEST OOS meilleurs paramètres IS =====
+Trades : 176   Winrate : 32.4 %   Profit factor : 1.08
+Expectancy : +0.034 R / trade   RR moyen prévu : 2.34
+Gain moyen : +2.28 R   Perte moyenne : -1.04 R
+P&L net : +911.84   Capital : 10000.00 → 10911.84
+Drawdown max : 2048.70 (16.3 %)   Série max de pertes : 9
+Par tranche de SCORE (le score est-il discriminant ?) :
+  7-7.9                              72 trades | winrate  26.4 % | expectancy -0.17 R | PF 0.80
+  8-8.9                              86 trades | winrate  40.7 % | expectancy +0.32 R | PF 1.57
+  9-10                               18 trades | winrate  16.7 % | expectancy -0.50 R | PF 0.44
+Par session (heure d'entrée) :
+  Asie / nuit (21-07 UTC)            78 trades | winrate  33.3 % | expectancy +0.09 R | PF 1.13
+  Londres (07-12 UTC)                48 trades | winrate  22.9 % | expectancy -0.34 R | PF 0.57
+  NY après-midi (17-21 UTC)           8 trades | winrate  75.0 % | expectancy +1.33 R | PF 8.47
+  New York / overlap (12-17 UTC)     42 trades | winrate  33.3 % | expectancy +0.11 R | PF 1.30
+Par type de setup :
+  FVG                                37 trades | winrate  40.5 % | expectancy +0.33 R | PF 1.65
+  FVG+OB                              4 trades | winrate  50.0 % | expectancy +0.50 R | PF 1.49
+  FVG+OB+OTE                         16 trades | winrate  37.5 % | expectancy +0.15 R | PF 1.30
+  FVG+OTE                            14 trades | winrate  21.4 % | expectancy -0.34 R | PF 0.61
+  OB                                 59 trades | winrate  30.5 % | expectancy -0.03 R | PF 0.99
+  OB+OTE                             31 trades | winrate  32.3 % | expectancy +0.06 R | PF 1.08
+  OTE                                15 trades | winrate  20.0 % | expectancy -0.37 R | PF 0.56
+Par raison de sortie :
+  SL                                117 trades | winrate   0.0 % | expectancy -1.01 R | PF 0.00
+  SL (gap)                            2 trades | winrate   0.0 % | expectancy -2.58 R | PF 0.00
+  TP                                 57 trades | winrate 100.0 % | expectancy +2.28 R | PF ∞
+Signaux M1 évalués : 178
+Principales raisons de NO TRADE :
+     399 × Setup expiré
+     141 × Aucun TP raisonnable n'offre RR ≥ # (meilleur #)
+      36 × Invalidé : M# sous le low du sweep
+      18 × SCORE #/# < minimum #
+       1 × RISK perte_journaliere: perte du jour # / limite #
+       1 × RISK taille: taille non calculable (capital/instrument/SL/budget)
+       1 × RISK trades_jour: #/# trades aujourd'hui
+Critères de validation avant réel :
+  [OK] au moins 100 trades
+  [OK] expectancy > 0 après coûts
+  [NON] winrate dans [45%, 65%]
+  [OK] drawdown max ≤ 20 %
+  → NON VALIDÉ
+AVERTISSEMENT : les performances passées (réelles ou simulées) ne garantissent pas les performances futures. Un backtest est une simulation avec des hypothèses de coûts et d'exécution ; le marché réel peut différer.
+
+[NOTE : ce test est INVALIDE — tous les trades ont été bloqués par MAX_SPREAD_POINTS=0.60.
+ Le test de sensibilité correct (plafond relevé à 1.0) est dans histdata_2018_2026_costs_and_management.txt.
+ scripts/research.py a été corrigé en conséquence.]
+===== RAPPORT DE BACKTEST OOS défauts, spread 0.80 (INVALIDE) =====
+Aucun trade simulé.
+Signaux M1 évalués : 205
+Principales raisons de NO TRADE :
+     394 × Setup expiré
+     205 × RISK spread: spread # (max #)
+     153 × Aucun TP raisonnable n'offre RR ≥ # (meilleur #)
+      37 × Invalidé : M# sous le low du sweep
+      23 × SCORE #/# < minimum #
+       1 × RISK rr_min: RR # (min #)
+Critères de validation avant réel :
+  [NON] au moins 100 trades
+  [NON] expectancy > 0 après coûts
+  [NON] winrate dans [45%, 65%]
+  [OK] drawdown max ≤ 20 %
+  → NON VALIDÉ
+  ! Échantillon insuffisant (0 trades < 100) : aucune conclusion statistique possible.
+AVERTISSEMENT : les performances passées (réelles ou simulées) ne garantissent pas les performances futures. Un backtest est une simulation avec des hypothèses de coûts et d'exécution ; le marché réel peut différer.
+
+===== RAPPORT DE BACKTEST PÉRIODE COMPLÈTE défauts =====
+Trades : 404   Winrate : 29.2 %   Profit factor : 0.90
+Expectancy : -0.056 R / trade   RR moyen prévu : 2.40
+Gain moyen : +2.31 R   Perte moyenne : -1.03 R
+P&L net : -2248.38   Capital : 10000.00 → 7751.62
+Drawdown max : 3968.36 (39.7 %)   Série max de pertes : 23
+Par tranche de SCORE (le score est-il discriminant ?) :
+  7-7.9                             172 trades | winrate  31.4 % | expectancy +0.03 R | PF 1.00
+  8-8.9                             184 trades | winrate  28.3 % | expectancy -0.10 R | PF 0.84
+  9-10                               48 trades | winrate  25.0 % | expectancy -0.17 R | PF 0.83
+Par session (heure d'entrée) :
+  Asie / nuit (21-07 UTC)           165 trades | winrate  30.9 % | expectancy -0.01 R | PF 0.98
+  Londres (07-12 UTC)               104 trades | winrate  26.0 % | expectancy -0.19 R | PF 0.73
+  NY après-midi (17-21 UTC)          23 trades | winrate  43.5 % | expectancy +0.38 R | PF 1.61
+  New York / overlap (12-17 UTC)    112 trades | winrate  26.8 % | expectancy -0.09 R | PF 0.84
+Par type de setup :
+  FVG                                74 trades | winrate  31.1 % | expectancy +0.03 R | PF 1.05
+  FVG+OB                             17 trades | winrate  35.3 % | expectancy +0.12 R | PF 1.21
+  FVG+OB+OTE                         27 trades | winrate  37.0 % | expectancy +0.17 R | PF 1.28
+  FVG+OTE                            28 trades | winrate  25.0 % | expectancy -0.20 R | PF 0.73
+  OB                                137 trades | winrate  29.2 % | expectancy -0.09 R | PF 0.82
+  OB+OTE                             83 trades | winrate  31.3 % | expectancy +0.06 R | PF 1.08
+  OTE                                38 trades | winrate  15.8 % | expectancy -0.49 R | PF 0.41
+Par raison de sortie :
+  SL                                283 trades | winrate   0.0 % | expectancy -1.02 R | PF 0.00
+  SL (gap)                            3 trades | winrate   0.0 % | expectancy -2.22 R | PF 0.00
+  TP                                117 trades | winrate 100.0 % | expectancy +2.31 R | PF ∞
+  TP (gap)                            1 trades | winrate 100.0 % | expectancy +3.25 R | PF ∞
+Signaux M1 évalués : 409
+Principales raisons de NO TRADE :
+     748 × Setup expiré
+     299 × Aucun TP raisonnable n'offre RR ≥ # (meilleur #)
+      75 × Invalidé : M# sous le low du sweep
+      60 × SCORE #/# < minimum #
+       3 × RISK rr_min: RR # (min #)
+       1 × RISK perte_journaliere: perte du jour # / limite #
+       1 × RISK taille: taille non calculable (capital/instrument/SL/budget)
+       1 × RISK trades_jour: #/# trades aujourd'hui
+Critères de validation avant réel :
+  [OK] au moins 100 trades
+  [NON] expectancy > 0 après coûts
+  [NON] winrate dans [45%, 65%]
+  [NON] drawdown max ≤ 20 %
+  → NON VALIDÉ
+AVERTISSEMENT : les performances passées (réelles ou simulées) ne garantissent pas les performances futures. Un backtest est une simulation avec des hypothèses de coûts et d'exécution ; le marché réel peut différer.
+
+GRILLE IS :
+{"params": {"min_score": 7.0, "sl_atr_mult": 0.25, "tp_mode": "nearest_valid"}, "trades": 219, "winrate": 0.2557077625570776, "expectancy_r": -0.1805897341015509, "profit_factor": 0.7493491345261806, "max_dd_pct": 35.71489279545331}
+{"params": {"min_score": 7.0, "sl_atr_mult": 0.25, "tp_mode": "prefer_target"}, "trades": 214, "winrate": 0.19158878504672897, "expectancy_r": -0.2594103766118656, "profit_factor": 0.6719285939963603, "max_dd_pct": 45.116521759287195}
+{"params": {"min_score": 7.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "trades": 202, "winrate": 0.2623762376237624, "expectancy_r": -0.16373992368774187, "profit_factor": 0.7837534262078719, "max_dd_pct": 30.580930234741228}
+{"params": {"min_score": 7.0, "sl_atr_mult": 0.5, "tp_mode": "prefer_target"}, "trades": 194, "winrate": 0.18556701030927836, "expectancy_r": -0.29424454185917187, "profit_factor": 0.6388042716796981, "max_dd_pct": 45.97272618335021}
+{"params": {"min_score": 8.0, "sl_atr_mult": 0.25, "tp_mode": "nearest_valid"}, "trades": 131, "winrate": 0.22900763358778625, "expectancy_r": -0.2627848950293652, "profit_factor": 0.6687490798239634, "max_dd_pct": 30.781994399998126}
+{"params": {"min_score": 8.0, "sl_atr_mult": 0.25, "tp_mode": "prefer_target"}, "trades": 129, "winrate": 0.15503875968992248, "expectancy_r": -0.36649651849251386, "profit_factor": 0.5543709211956458, "max_dd_pct": 39.785321359997944}
+{"params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "trades": 124, "winrate": 0.23387096774193547, "expectancy_r": -0.23337619134164655, "profit_factor": 0.6931328587642033, "max_dd_pct": 26.780657759998412}
+{"params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "prefer_target"}, "trades": 122, "winrate": 0.1557377049180328, "expectancy_r": -0.36893971851121926, "profit_factor": 0.5462535774881148, "max_dd_pct": 38.10055543999842}
+
+WALK-FORWARD :
+{"is": ["2018-01-01T00:00:00+00:00", "2020-01-01T00:00:00+00:00"], "oos": ["2020-01-01T00:00:00+00:00", "2020-07-01T00:00:00+00:00"], "params": {"min_score": 7.0, "sl_atr_mult": 0.25, "tp_mode": "nearest_valid"}, "oos_trades": 23, "oos_expectancy_r": -0.06259114695971178, "oos_winrate": 0.2608695652173913}
+{"is": ["2018-07-02T00:00:00+00:00", "2020-07-01T00:00:00+00:00"], "oos": ["2020-07-01T00:00:00+00:00", "2020-12-30T00:00:00+00:00"], "params": {"min_score": 7.0, "sl_atr_mult": 0.25, "tp_mode": "nearest_valid"}, "oos_trades": 21, "oos_expectancy_r": -0.3462402755089894, "oos_winrate": 0.19047619047619047}
+{"is": ["2018-12-31T00:00:00+00:00", "2020-12-30T00:00:00+00:00"], "oos": ["2020-12-30T00:00:00+00:00", "2021-06-30T00:00:00+00:00"], "params": {"min_score": 7.0, "sl_atr_mult": 0.25, "tp_mode": "nearest_valid"}, "oos_trades": 21, "oos_expectancy_r": -0.44115815025112326, "oos_winrate": 0.19047619047619047}
+{"is": ["2019-07-01T00:00:00+00:00", "2021-06-30T00:00:00+00:00"], "oos": ["2021-06-30T00:00:00+00:00", "2021-12-29T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.25, "tp_mode": "nearest_valid"}, "oos_trades": 15, "oos_expectancy_r": -0.611094898348512, "oos_winrate": 0.13333333333333333}
+{"is": ["2019-12-30T00:00:00+00:00", "2021-12-29T00:00:00+00:00"], "oos": ["2021-12-29T00:00:00+00:00", "2022-06-29T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "oos_trades": 8, "oos_expectancy_r": -0.585407632461823, "oos_winrate": 0.125}
+{"is": ["2020-06-29T00:00:00+00:00", "2022-06-29T00:00:00+00:00"], "oos": ["2022-06-29T00:00:00+00:00", "2022-12-28T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "oos_trades": 14, "oos_expectancy_r": 0.07401580517372337, "oos_winrate": 0.2857142857142857}
+{"is": ["2020-12-28T00:00:00+00:00", "2022-12-28T00:00:00+00:00"], "oos": ["2022-12-28T00:00:00+00:00", "2023-06-28T00:00:00+00:00"], "params": {"min_score": 7.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "oos_trades": 21, "oos_expectancy_r": -0.2584430016331749, "oos_winrate": 0.23809523809523808}
+{"is": ["2021-06-28T00:00:00+00:00", "2023-06-28T00:00:00+00:00"], "oos": ["2023-06-28T00:00:00+00:00", "2023-12-27T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "prefer_target"}, "oos_trades": 12, "oos_expectancy_r": 0.6573434766151368, "oos_winrate": 0.4166666666666667}
+{"is": ["2021-12-27T00:00:00+00:00", "2023-12-27T00:00:00+00:00"], "oos": ["2023-12-27T00:00:00+00:00", "2024-06-26T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "oos_trades": 19, "oos_expectancy_r": 0.022024974574733062, "oos_winrate": 0.3157894736842105}
+{"is": ["2022-06-27T00:00:00+00:00", "2024-06-26T00:00:00+00:00"], "oos": ["2024-06-26T00:00:00+00:00", "2024-12-25T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "oos_trades": 14, "oos_expectancy_r": 0.6611603848507286, "oos_winrate": 0.5714285714285714}
+{"is": ["2022-12-26T00:00:00+00:00", "2024-12-25T00:00:00+00:00"], "oos": ["2024-12-25T00:00:00+00:00", "2025-06-25T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "oos_trades": 17, "oos_expectancy_r": -0.225436139971623, "oos_winrate": 0.23529411764705882}
+{"is": ["2023-06-26T00:00:00+00:00", "2025-06-25T00:00:00+00:00"], "oos": ["2025-06-25T00:00:00+00:00", "2025-12-24T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "nearest_valid"}, "oos_trades": 12, "oos_expectancy_r": 0.3108168576833399, "oos_winrate": 0.4166666666666667}
+{"is": ["2023-12-25T00:00:00+00:00", "2025-12-24T00:00:00+00:00"], "oos": ["2025-12-24T00:00:00+00:00", "2026-06-24T00:00:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.25, "tp_mode": "prefer_target"}, "oos_trades": 15, "oos_expectancy_r": -0.1738840349913282, "oos_winrate": 0.2}
+{"is": ["2024-06-24T00:00:00+00:00", "2026-06-24T00:00:00+00:00"], "oos": ["2026-06-24T00:00:00+00:00", "2026-10-01T03:59:00+00:00"], "params": {"min_score": 8.0, "sl_atr_mult": 0.5, "tp_mode": "prefer_target"}, "oos_trades": 8, "oos_expectancy_r": -0.020189402287769845, "oos_winrate": 0.25}
+
+===== RAPPORT DE BACKTEST WALK-FORWARD OOS concaténé (R × 100) =====
+Trades : 220   Winrate : 26.8 %   Profit factor : 0.87
+Expectancy : -0.098 R / trade   RR moyen prévu : 2.51
+Gain moyen : +2.39 R   Perte moyenne : -1.01 R
+P&L net : -2152.53   Capital : 10000.00 → 7847.47
+Drawdown max : 4801.76 (44.6 %)   Série max de pertes : 23
+Par tranche de SCORE (le score est-il discriminant ?) :
+  7-7.9                              29 trades | winrate  13.8 % | expectancy -0.55 R | PF 0.35
+  8-8.9                             149 trades | winrate  30.9 % | expectancy +0.06 R | PF 1.08
+  9-10                               42 trades | winrate  21.4 % | expectancy -0.34 R | PF 0.58
+Par session (heure d'entrée) :
+  Asie / nuit (21-07 UTC)            92 trades | winrate  27.2 % | expectancy -0.11 R | PF 0.85
+  Londres (07-12 UTC)                54 trades | winrate  22.2 % | expectancy -0.25 R | PF 0.69
+  NY après-midi (17-21 UTC)          16 trades | winrate  31.2 % | expectancy +0.17 R | PF 1.26
+  New York / overlap (12-17 UTC)     58 trades | winrate  29.3 % | expectancy -0.01 R | PF 0.99
+Par type de setup :
+  FVG                                32 trades | winrate  31.2 % | expectancy -0.00 R | PF 0.99
+  FVG+OB                              8 trades | winrate  50.0 % | expectancy +0.54 R | PF 2.06
+  FVG+OB+OTE                         21 trades | winrate  28.6 % | expectancy -0.00 R | PF 0.99
+  FVG+OTE                            22 trades | winrate  22.7 % | expectancy -0.29 R | PF 0.63
+  OB                                 61 trades | winrate  26.2 % | expectancy -0.07 R | PF 0.90
+  OB+OTE                             59 trades | winrate  27.1 % | expectancy -0.09 R | PF 0.88
+  OTE                                17 trades | winrate  11.8 % | expectancy -0.56 R | PF 0.38
+Par raison de sortie :
+  FIN DE PÉRIODE                      2 trades | winrate  50.0 % | expectancy +0.18 R | PF 8.83
+  SL                                159 trades | winrate   0.0 % | expectancy -1.02 R | PF 0.00
+  SL (gap)                            1 trades | winrate   0.0 % | expectancy -1.07 R | PF 0.00
+  TP                                 58 trades | winrate 100.0 % | expectancy +2.43 R | PF ∞
+Signaux M1 évalués : 0
+Critères de validation avant réel :
+  [OK] au moins 100 trades
+  [NON] expectancy > 0 après coûts
+  [NON] winrate dans [45%, 65%]
+  [NON] drawdown max ≤ 20 %
+  → NON VALIDÉ
+AVERTISSEMENT : les performances passées (réelles ou simulées) ne garantissent pas les performances futures. Un backtest est une simulation avec des hypothèses de coûts et d'exécution ; le marché réel peut différer.
