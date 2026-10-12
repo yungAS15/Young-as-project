@@ -1,0 +1,15 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Runtime data (DB, logs, downloaded market data, reports)
+var/
+*.sqlite
+*.db
