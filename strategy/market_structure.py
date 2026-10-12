@@ -137,3 +137,24 @@ def find_bullish_choch(candles: Sequence[Candle], sweep_index: int, sweep_low: f
             hi_idx = max(range(sweep_index, len(candles)), key=lambda x: candles[x].high)
             return Choch(level.price, level.index, j, candles[hi_idx].high, hi_idx)
     return None
+
+
+def d1_bullish(h4: Sequence[Candle], ema_period: int = 20, slope_lookback: int = 5) -> tuple[bool, str]:
+    """D1 reconstruit depuis les H4 closes : clôture > EMA20 et EMA20 montante sur 5 jours.
+
+    Seules les journées complètes (6 bougies H4) sont utilisées, pas de lookahead."""
+    from data.candles import resample
+    if not h4:
+        return False, "historique vide"
+    d1 = resample(h4, "D1")
+    last_close = h4[-1].close_time("H4")
+    d1 = [d for d in d1 if d.close_time("D1") <= last_close]
+    closes = [d.close for d in d1]
+    if len(closes) < ema_period + slope_lookback:
+        return False, "historique D1 insuffisant"
+    e_now = ema(closes, ema_period)
+    e_prev = ema(closes[:-slope_lookback], ema_period)
+    if e_now is None or e_prev is None:
+        return False, "EMA indisponible"
+    ok = closes[-1] > e_now and e_now > e_prev
+    return ok, f"clôture {closes[-1]:.2f} vs EMA{ema_period} {e_now:.2f} ({'montante' if e_now > e_prev else 'descendante'})"

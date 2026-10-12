@@ -19,7 +19,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field, replace
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Callable, Sequence
 
 from broker.models import InstrumentSpec
@@ -98,6 +98,8 @@ class BacktestEngine:
         armed: Setup | None = None
         pending: tuple[TradeSignal, float, float] | None = None   # (signal, size, risk)
         position: SimTrade | None = None
+        working: tuple[TradeSignal, float, float, datetime] | None = None   # ordre limite (H4)
+        limit_mode = p.entry_mode == "limit"
         i15 = i4 = 0
         n = len(m1)
         last_j = n - 1
@@ -124,6 +126,23 @@ class BacktestEngine:
                     day = bar.time.astimezone(tz).date()
                     day_trades[day] = day_trades.get(day, 0) + 1
 
+            # --- 1b) ordre limite en attente (H4) : rempli si l'ASK touche le niveau
+            fill_bar = False
+            if working is not None and position is None:
+                sig, size, risk, expires = working
+                if bar.time >= expires:
+                    working = None
+                    refusals.append("Ordre limite expiré sans exécution")
+                elif bar.low + bar.spread <= sig.entry:
+                    fill = min(sig.entry, bar.open + bar.spread)
+                    position = SimTrade(sig.setup_id, sig.time, bar.time, fill, sig.stop_loss, sig.take_profit,
+                                        size, risk, sig.score, sig.rr, dict(sig.flags),
+                                        initial_sl=sig.stop_loss, initial_size=size)
+                    day = bar.time.astimezone(tz).date()
+                    day_trades[day] = day_trades.get(day, 0) + 1
+                    working = None
+                    fill_bar = True
+
             # --- 2) gestion de la position (BID)
             if position is not None:
                 exit_px = None
@@ -132,6 +151,8 @@ class BacktestEngine:
                     exit_px, reason = bar.open - slip, "SL (gap)"
                 elif bar.low <= position.stop_loss:
                     exit_px, reason = position.stop_loss - slip, "SL"
+                elif fill_bar:
+                    pass   # bougie de remplissage : ordre SL/TP inconnu → on ne compte pas le TP (prudent)
                 elif bar.open >= position.take_profit:
                     exit_px, reason = bar.open, "TP (gap)"
                 elif bar.high >= position.take_profit:
@@ -188,10 +209,18 @@ class BacktestEngine:
                     armed = None
 
             # --- 4) confirmation M1 et décision
-            if armed is None or position is not None or pending is not None:
+            if armed is None or position is not None or pending is not None or working is not None:
                 continue
             m1_win = m1[max(0, j - M1_WINDOW + 1):j + 1]
-            out = self.engine.confirm_entry(armed, h4_win, m15_win, m1_win, vwap.values(), bar.spread)
+            if limit_mode:
+                if any(c.low < armed.sweep.sweep_low for c in m1_win if c.time >= armed.choch_time):
+                    refusals.append("Invalidé : M# sous le low du sweep")
+                    armed = None
+                    continue
+                out = self.engine.limit_plan(armed, h4_win, m15_win, bar.time + timedelta(minutes=1),
+                                             vwap.values(), bar.spread)
+            else:
+                out = self.engine.confirm_entry(armed, h4_win, m15_win, m1_win, vwap.values(), bar.spread)
             if isinstance(out, NoTrade):
                 if "expiré" in out.reason or "Invalidé" in out.reason:
                     refusals.append(normalize_reason(out.reason))
@@ -214,9 +243,13 @@ class BacktestEngine:
             )
             dec = self.rm.evaluate(ctx, "backtest")
             used_setups.add(armed.setup_id)    # une seule entrée par signal
+            expires = armed.expires_at
             armed = None
             if not dec.approved:
                 refusals += ["RISK " + normalize_reason(c.name + ": " + c.detail) for c in dec.failed]
+                continue
+            if limit_mode:
+                working = (out, dec.size, dec.sizing.risk_effective, expires)  # type: ignore[union-attr]
                 continue
             pending = (out, dec.size, dec.sizing.risk_effective)  # type: ignore[union-attr]
             if self.progress and j % 5000 == 0:

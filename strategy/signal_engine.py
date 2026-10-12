@@ -28,7 +28,7 @@ from strategy.fibonacci import Zone, extension, ote_zone
 from strategy.fvg import FVG, bullish_fvgs
 from strategy.indicators import atr
 from strategy.liquidity import Sweep, detect_sweep, sell_side_levels
-from strategy.market_structure import Bias, BiasResult, Choch, find_bullish_choch, find_swings, h4_bias, swing_highs
+from strategy.market_structure import Bias, d1_bullish, BiasResult, Choch, find_bullish_choch, find_swings, h4_bias, swing_highs
 from strategy.order_blocks import OrderBlock, bullish_order_block
 from strategy.scoring import ScoreBreakdown
 from strategy.vwap import VwapValue
@@ -112,6 +112,12 @@ class SignalEngine:
         bias = h4_bias(h4, p.swing_k_h4, p.h4_ema_period)
         if bias.bias not in (Bias.BULLISH, Bias.NEUTRAL_BULLISH):
             return NoSetup(f"Biais H4 non haussier : {bias.bias.value} — {bias.detail}")
+        if p.h4_strict_bullish and bias.bias != Bias.BULLISH:
+            return NoSetup(f"Biais H4 non haussier : {bias.bias.value} (mode strict)")
+        if p.require_d1_bullish:
+            ok, why = d1_bullish(h4)
+            if not ok:
+                return NoSetup(f"Biais H4 non haussier : D1 {why}")
         atr_m15 = atr(m15, p.atr_period)
         atr_h4 = atr(h4, p.atr_period)
         if not atr_m15 or not atr_h4:
@@ -145,6 +151,8 @@ class SignalEngine:
                                  reclaim_bars=p.sweep_reclaim_bars,
                                  min_penetration=p.sweep_min_penetration_atr * atr_m15)
             if sweep is None:
+                continue
+            if p.require_significant_sweep and not sweep.significant:
                 continue
             choch = find_bullish_choch(m15, sweep.sweep_index, sweep.sweep_low, p.swing_k_m15,
                                        p.choch_max_bars_after_sweep, swings=m15_swings)
@@ -200,6 +208,9 @@ class SignalEngine:
         if not touched:
             return NoTrade("Prix pas encore revenu dans la zone (OTE/FVG/OB)", sid)
 
+        if p.confirm_tf == "M15":
+            return self._confirm_m15(setup, h4, m15, m1, vwaps, spread)
+
         # 2) Confirmation M1 : micro-CHOCH (clôture > plus haut des N M1 précédentes) ou rejet.
         prev = m1[-1 - p.m1_break_lookback:-1]
         micro_level = max(c.high for c in prev)
@@ -214,8 +225,18 @@ class SignalEngine:
         m1_note = (f"micro-CHOCH M1 : clôture {now_bar.close:.2f} > {micro_level:.2f}" if micro_choch
                    else "rejet M1 (mèche basse ≥ 2× corps, clôture dans le tiers haut)")
 
+        return self._build_signal(setup, h4, m15, now, now_bar.close + spread, touched, touch_low,
+                                  now_bar.close, vwaps, spread, m1_note,
+                                  {"m1_micro_choch": micro_choch, "m1_rejection": rejection})
+
+    def _build_signal(self, setup: Setup, h4: Sequence[Candle], m15: Sequence[Candle], now: datetime,
+                      entry: float, touched: list[str], touch_low: float, ref_close: float,
+                      vwaps: dict[str, VwapValue], spread: float, confirm_note: str | None,
+                      extra_flags: dict[str, bool]) -> TradeSignal | NoTrade:
+        """Calcule SL/TP/RR/score à partir d'une entrée (commun M1, M15, limite)."""
+        p = self.p
+        sid = setup.setup_id
         # 3) Prix, SL, TP
-        entry = now_bar.close + spread
         sl = setup.sweep.sweep_low - (p.sl_atr_mult * setup.atr_m15 + spread)
         risk = entry - sl
         if risk <= 0:
@@ -244,13 +265,14 @@ class SignalEngine:
                f"OTE {setup.ote.bottom:.2f}–{setup.ote.top:.2f} " + ("touchée" if ote_hit else "non atteinte"))
         tol = p.vwap_tolerance_atr * setup.atr_m15
         vwap_hits = [k for k, v in vwaps.items()
-                     if v.available and touch_low <= v.value + tol and now_bar.close >= v.value - tol]  # type: ignore[operator]
+                     if v.available and touch_low <= v.value + tol and ref_close >= v.value - tol]  # type: ignore[operator]
         unavailable = [f"{k}: {v.reason}" for k, v in vwaps.items() if not v.available]
         vnote = ("réaction sur VWAP " + ",".join(vwap_hits)) if vwap_hits else "pas de réaction sur un VWAP"
         if unavailable:
             vnote += " | indisponible: " + "; ".join(unavailable)
         sb.add("vwap", 1.0 if vwap_hits else 0.0, vnote)
-        sb.add("m1_confirmation", 1.0, m1_note)
+        sb.add("m1_confirmation", 1.0 if confirm_note else 0.0,
+               confirm_note or "pas de confirmation (ordre limite placé à l'avance)")
 
         if sb.total < p.min_score:
             return NoTrade(f"{sb.label()} < minimum {p.min_score:g}", sid,
@@ -261,7 +283,7 @@ class SignalEngine:
             "M15": (f"sweep {setup.sweep.level_kind} {setup.sweep.level:.2f} (low {setup.sweep.sweep_low:.2f}, "
                     f"{setup.sweep.reaction}) puis CHOCH > {setup.choch.level:.2f} ; impulsion "
                     f"{setup.impulse_low:.2f}→{setup.impulse_high:.2f}"),
-            "M1": m1_note,
+            "M1": confirm_note or "ordre limite (pas de confirmation)",
         }
         return TradeSignal(
             setup_id=sid, direction=DIRECTION, time=now, entry=round(entry, 2), stop_loss=round(sl, 2),
@@ -275,10 +297,43 @@ class SignalEngine:
             analysis=analysis,
             flags={"sweep": True, "choch": True, "fvg": fvg_hit, "ob": ob_hit, "ote": ote_hit,
                    "vwap": bool(vwap_hits), "liquidity_significant": setup.sweep.significant,
-                   "m1_micro_choch": micro_choch, "m1_rejection": rejection},
+                   **extra_flags},
             vwaps={k: (round(v.value, 2) if v.value is not None else None) for k, v in vwaps.items()},
             spread=spread,
         )
+
+    def _confirm_m15(self, setup: Setup, h4: Sequence[Candle], m15: Sequence[Candle], m1: Sequence[Candle],
+                     vwaps: dict[str, VwapValue], spread: float) -> TradeSignal | NoTrade:
+        """H1 : confirmation sur la clôture M15 (évaluée uniquement à l'instant de cette clôture).
+
+        La dernière M15 close, postérieure au CHOCH, touche une zone, est haussière et clôture
+        au-dessus du haut de la zone touchée la plus basse (rejet / réintégration)."""
+        sid = setup.setup_id
+        now = m1[-1].close_time("M1")
+        if not m15 or m15[-1].close_time("M15") != now:
+            return NoTrade("Attente de la clôture M15", sid)
+        bar = m15[-1]
+        if bar.time < setup.choch_time:
+            return NoTrade("Pas encore de M15 après le CHOCH", sid)
+        touched = [(n, z) for n, z in setup.zones if z.touched_by(bar.low, bar.high)]
+        if not touched:
+            return NoTrade("Prix pas encore revenu dans la zone (OTE/FVG/OB)", sid)
+        lowest_top = min(z.top for _, z in touched)
+        if not (bar.is_bullish and bar.close > lowest_top):
+            return NoTrade("Pas de confirmation M15 (rejet haussier)", sid)
+        note = f"rejet M15 : clôture {bar.close:.2f} > haut de zone {lowest_top:.2f}"
+        return self._build_signal(setup, h4, m15, now, bar.close + spread, [n for n, _ in touched], bar.low,
+                                  bar.close, vwaps, spread, note, {"m15_confirmation": True})
+
+    def limit_plan(self, setup: Setup, h4: Sequence[Candle], m15: Sequence[Candle], now: datetime,
+                   vwaps: dict[str, VwapValue], spread: float) -> TradeSignal | NoTrade:
+        """H4 : ordre limite BUY (prix ASK) au niveau `limit_retracement` de l'impulsion."""
+        p = self.p
+        bid_level = setup.impulse_high - p.limit_retracement * (setup.impulse_high - setup.impulse_low)
+        entry = bid_level + spread
+        touched = [n for n, z in setup.zones if z.contains(bid_level)]
+        return self._build_signal(setup, h4, m15, now, entry, touched, bid_level, bid_level, vwaps, spread, None,
+                                  {"limit_order": True})
 
     # ------------------------------------------------------------------ TP
     def _choose_tp(self, setup: Setup, h4: Sequence[Candle], m15: Sequence[Candle], entry: float,

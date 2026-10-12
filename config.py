@@ -124,6 +124,13 @@ class StrategyParams:
     h4_ema_period: int = 50
     session_reset_hour_utc: int = 22         # VWAP session : reset au début du jour de trading
     min_score: float = 7.0
+    # --- Hypothèses d'ajustement (docs/BACKTEST_RESULTS.md) — défauts = règles v1 ---
+    confirm_tf: str = "M1"                    # H1 : "M1" (micro-CHOCH) | "M15" (clôture M15 de rejet)
+    require_significant_sweep: bool = False   # H2 : sweep d'un niveau H4 / equal lows / range low obligatoire
+    h4_strict_bullish: bool = False           # H3 : biais H4 BULLISH uniquement (pas neutre)
+    require_d1_bullish: bool = False          # H3 : D1 au-dessus d'une EMA20 montante
+    entry_mode: str = "market"                # H4 : "market" | "limit"
+    limit_retracement: float = 0.705          # H4 : niveau de l'ordre limite dans l'impulsion
 
 
 @dataclass(frozen=True)
@@ -272,6 +279,10 @@ class Settings:
             raise ConfigError("MANUAL_APPROVAL_REQUIRED=false exige MODE=AUTO explicite")
         if not 0 < self.strategy.ote_low < self.strategy.ote_high < 1:
             raise ConfigError("Zone OTE invalide")
+        if self.strategy.confirm_tf not in ("M1", "M15"):
+            raise ConfigError("CONFIRM_TF doit valoir M1 ou M15")
+        if self.strategy.entry_mode not in ("market", "limit"):
+            raise ConfigError("ENTRY_MODE doit valoir market ou limit")
         if self.strategy.tp_mode not in ("nearest_valid", "first_liquidity", "prefer_target"):
             raise ConfigError("TP_MODE invalide")
         if abs(self.weights.total - 10.0) > 1e-9:
@@ -303,6 +314,12 @@ def load_settings(env_file: str | os.PathLike[str] | None = None, *, load_dotenv
         tp_mode=_env("TP_MODE", "nearest_valid") or "nearest_valid",
         max_tp_atr_h4=_float("MAX_TP_ATR_H4", 3.0),
         min_score=_float("MIN_SCORE", 7.0),
+        confirm_tf=(_env("CONFIRM_TF", "M1") or "M1").upper(),
+        require_significant_sweep=_bool("REQUIRE_SIGNIFICANT_SWEEP", False),
+        h4_strict_bullish=_bool("H4_STRICT_BULLISH", False),
+        require_d1_bullish=_bool("REQUIRE_D1_BULLISH", False),
+        entry_mode=(_env("ENTRY_MODE", "market") or "market").lower(),
+        limit_retracement=_float("LIMIT_RETRACEMENT", 0.705),
         setup_expiry_m15_bars=_int("SETUP_EXPIRY_M15_BARS", 16),
         session_reset_hour_utc=_int("SESSION_RESET_HOUR_UTC", 22),
     )
