@@ -43,12 +43,18 @@ def find_swings(candles: Sequence[Candle], k: int = 2) -> list[Swing]:
     """Tous les swings confirmés dans `candles` (la dernière bougie fournie est supposée close)."""
     out: list[Swing] = []
     n = len(candles)
+    highs = [c.high for c in candles]
+    lows = [c.low for c in candles]
     for i in range(k, n - k):
-        h = candles[i].high
-        lo = candles[i].low
-        if all(h > candles[j].high for j in range(i - k, i)) and all(h > candles[j].high for j in range(i + 1, i + k + 1)):
+        h = highs[i]
+        lo = lows[i]
+        left_h = highs[i - k:i]
+        right_h = highs[i + 1:i + k + 1]
+        if h > max(left_h) and h > max(right_h):
             out.append(Swing(i, h, "high", i + k))
-        if all(lo < candles[j].low for j in range(i - k, i)) and all(lo < candles[j].low for j in range(i + 1, i + k + 1)):
+        left_l = lows[i - k:i]
+        right_l = lows[i + 1:i + k + 1]
+        if lo < min(left_l) and lo < min(right_l):
             out.append(Swing(i, lo, "low", i + k))
     return out
 
@@ -113,10 +119,13 @@ class Choch:
 
 
 def find_bullish_choch(candles: Sequence[Candle], sweep_index: int, sweep_low: float,
-                       k: int = 2, max_bars: int = 12) -> Choch | None:
-    """CHOCH haussier après le sweep. N'utilise que les swings confirmés avant le sweep."""
-    sw = [s for s in swing_highs(find_swings(candles[: sweep_index + 1], k)) if s.index < sweep_index]
-    # find_swings sur candles[:sweep_index+1] garantit confirmed_at <= sweep_index.
+                       k: int = 2, max_bars: int = 12, swings: Sequence[Swing] | None = None) -> Choch | None:
+    """CHOCH haussier après le sweep. N'utilise que les swings confirmés au plus tard à la
+    bougie de sweep (`swings` : liste précalculée sur toute la fenêtre, filtrée ici — résultat
+    identique à find_swings(candles[:sweep_index+1]))."""
+    if swings is None:
+        swings = find_swings(candles[: sweep_index + 1], k)
+    sw = [s for s in swing_highs(swings) if s.index < sweep_index and s.confirmed_at <= sweep_index]
     if not sw:
         return None
     level = sw[-1]

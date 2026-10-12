@@ -232,7 +232,9 @@ def cmd_decide(args) -> None:
     from interface.web import current_price_from_status
     s = _settings()
     db = _db(s)
-    res = ApprovalManager(db, s).handle(args.command, current_price_from_status(db))
+    from monitoring.alerts import build_notifier
+    res = ApprovalManager(db, s, notifier=build_notifier(s, db, console=False)).handle(
+        args.command, current_price_from_status(db))
     print(res.message)
     sys.exit(0 if res.ok else 1)
 

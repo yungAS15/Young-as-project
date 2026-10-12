@@ -35,7 +35,7 @@ class BotRunner:
         self.market = MarketDataService(client, settings)
         self.engine = SignalEngine(settings.strategy, settings.weights)
         self.rm = RiskManager(settings)
-        self.approvals = ApprovalManager(db, settings)
+        self.approvals = ApprovalManager(db, settings, notifier=notifier)
         self.executor = TradeExecutor(settings, db, self.market, client, self.approvals, notifier)
         self.monitor = PositionMonitor(settings, db, client, self.market, notifier)
         self.setup: Setup | None = None
@@ -108,6 +108,9 @@ class BotRunner:
             elif self.setup is not None and "invalidé" in st.reason.lower():
                 self.setup = None
         if self.setup is None or self.setup.setup_id in self.proposed_setups:
+            return
+        if self.db.proposal_exists_for_setup(self.setup.setup_id):   # redémarrage : jamais 2 propositions
+            self.proposed_setups.add(self.setup.setup_id)
             return
         spread = snap.quote.spread if snap.quote else self.s.max_spread_points
         out = self.engine.confirm_entry(self.setup, snap.h4, snap.m15, snap.m1, snap.vwaps, spread)

@@ -67,10 +67,17 @@ def fingerprint(payload: dict[str, Any]) -> str:
 
 
 class ApprovalManager:
-    def __init__(self, db: Database, settings: Settings, clock: Callable[[], datetime] = utcnow):
+    def __init__(self, db: Database, settings: Settings, clock: Callable[[], datetime] = utcnow,
+                 notifier: Any = None):
         self.db = db
         self.s = settings
         self.clock = clock
+        self.notifier = notifier
+
+    def _notify(self, kind: str, text: str) -> None:
+        if self.notifier is not None:
+            from monitoring.alerts import Event
+            self.notifier.notify(Event(kind), text)
 
     # --------------------------------------------------------------- create
     def build_payload(self, signal: TradeSignal, decision: RiskDecision, *, epic: str, bid: float | None,
@@ -143,6 +150,8 @@ class ApprovalManager:
         if cmd.action == "REJECT":
             ok = self.db.update_proposal_status(cmd.proposal_id, REJECTED, "rejetée par l'utilisateur",
                                                 expected_status=PENDING)
+            if ok:
+                self._notify("REJECTED", f"Proposition {cmd.proposal_id} rejetée")
             return DecisionResult(ok, "Rejetée" if ok else f"Impossible : statut {row['status']}",
                                   REJECTED if ok else row["status"])
         if cmd.action == "CANCEL":
@@ -161,6 +170,8 @@ class ApprovalManager:
             return DecisionResult(False, f"Proposition expirée : {reason}", EXPIRED)
         ok = self.db.update_proposal_status(cmd.proposal_id, APPROVED, "approuvée par l'utilisateur",
                                             expected_status=PENDING)
+        if ok:
+            self._notify("APPROVED", f"Proposition {cmd.proposal_id} approuvée — revérification avant ordre")
         return DecisionResult(ok, "Approuvée — revérification complète avant ordre" if ok else "Conflit d'état",
                               APPROVED if ok else None)
 

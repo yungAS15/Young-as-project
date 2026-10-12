@@ -219,6 +219,9 @@ class Database:
                              (status, note, now, pid, expected_status))
         return cur.rowcount == 1
 
+    def proposal_exists_for_setup(self, setup_id: str) -> bool:
+        return bool(self._rows("SELECT 1 FROM proposals WHERE setup_id=? LIMIT 1", (setup_id,)))
+
     def proposals(self, status: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
         if status:
             rows = self._rows("SELECT * FROM proposals WHERE status=? ORDER BY created_at DESC LIMIT ?", (status, limit))

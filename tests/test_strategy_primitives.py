@@ -189,7 +189,8 @@ def test_trading_day_reset_at_22_utc():
 
 def test_vwap_known_values_and_session_reset():
     t0 = datetime(2025, 3, 3, 20, 0, tzinfo=timezone.utc)
-    cs = [Candle(t0 + timedelta(minutes=15 * i), 10, 12, 8, 10, 100) for i in range(4)]
+    prev_week = Candle(datetime(2025, 2, 27, 10, 0, tzinfo=timezone.utc), 5, 5, 5, 5, 100)  # transition observée
+    cs = [prev_week] + [Candle(t0 + timedelta(minutes=15 * i), 10, 12, 8, 10, 100) for i in range(4)]
     cs += [Candle(t0 + timedelta(minutes=15 * i), 20, 21, 19, 20, 300) for i in range(8, 12)]  # après 22:00
     v = compute_vwaps(cs)
     assert v["session"].value == pytest.approx(20.0)   # reset à 22:00
@@ -199,12 +200,22 @@ def test_vwap_known_values_and_session_reset():
 
 def test_vwap_unavailable_without_volume():
     t0 = datetime(2025, 3, 4, 0, 0, tzinfo=timezone.utc)
-    cs = [Candle(t0 + timedelta(minutes=15 * i), 10, 11, 9, 10, 0.0) for i in range(10)]
+    first = Candle(t0 - timedelta(days=1), 10, 11, 9, 10, 0.0)
+    cs = [first] + [Candle(t0 + timedelta(minutes=15 * i), 10, 11, 9, 10, 0.0) for i in range(10)]
     v = compute_vwaps(cs)
     assert v["session"].value is None and "volume" in v["session"].reason
     # couverture partielle insuffisante
-    cs2 = [Candle(t0 + timedelta(minutes=15 * i), 10, 11, 9, 10, 100.0 if i < 5 else 0.0) for i in range(10)]
+    cs2 = [first] + [Candle(t0 + timedelta(minutes=15 * i), 10, 11, 9, 10, 100.0 if i < 5 else 0.0) for i in range(10)]
     assert compute_vwaps(cs2)["session"].value is None
+
+
+def test_vwap_incomplete_period_is_unavailable():
+    # Historique commençant en milieu de mois : VWAP mensuel indisponible (pas de faux niveau)
+    t0 = datetime(2025, 3, 12, 0, 0, tzinfo=timezone.utc)
+    cs = [Candle(t0 + timedelta(minutes=15 * i), 10, 11, 9, 10, 100.0) for i in range(200)]
+    v = compute_vwaps(cs)
+    assert v["monthly"].value is None and "non couvert" in v["monthly"].reason
+    assert v["session"].value is not None   # sessions suivantes complètes
 
 
 def test_vwap_incremental_equals_batch():

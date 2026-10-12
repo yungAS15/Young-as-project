@@ -17,6 +17,7 @@ sans toucher au Risk Manager.
 """
 from __future__ import annotations
 
+from bisect import bisect_right
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Sequence
@@ -121,11 +122,17 @@ class SignalEngine:
         window = p.choch_max_bars_after_sweep + p.sweep_reclaim_bars + p.setup_expiry_m15_bars
         m15_swings = find_swings(m15, p.swing_k_m15)   # filtrés par confirmation < s plus bas
         h4_all_swings = find_swings(h4, p.swing_k_h4)
+        h4_close_ts = [c.time.timestamp() + 14400 for c in h4]
         # Parcours du plus récent au plus ancien : le sweep le plus récent ayant un CHOCH gagne.
         for s in range(last, max(p.swing_k_m15 + 1, last - window) - 1, -1):
+            # Condition nécessaire (optimisation sans effet sur le résultat) : un niveau balayé
+            # est confirmé au plus tard en s-1-k et non pris jusqu'à s-1, donc le low de s doit
+            # être sous les lows de s-1 et s-2.
+            if not m15[s].low < min(m15[s - 1].low, m15[s - 2].low):
+                continue
             sweep_open = m15[s].time
-            h4_before = [c for c in h4 if c.close_time("H4") <= sweep_open]
-            nb = len(h4_before)
+            nb = bisect_right(h4_close_ts, sweep_open.timestamp())
+            h4_before = h4[:nb]
             levels = sell_side_levels(
                 m15, h4_before, k_m15=p.swing_k_m15, k_h4=p.swing_k_h4, atr_m15=atr_m15,
                 equal_tol_atr=p.equal_lows_tolerance_atr, lookback=p.liquidity_lookback_m15,
@@ -140,7 +147,7 @@ class SignalEngine:
             if sweep is None:
                 continue
             choch = find_bullish_choch(m15, sweep.sweep_index, sweep.sweep_low, p.swing_k_m15,
-                                       p.choch_max_bars_after_sweep)
+                                       p.choch_max_bars_after_sweep, swings=m15_swings)
             if choch is None:
                 continue
             # Invalidation : un plus bas sous le sweep après le CHOCH.

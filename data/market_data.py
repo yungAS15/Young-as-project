@@ -50,6 +50,7 @@ class MarketDataService:
         self.epic = settings.allowed_epics[0]
         self._inst: InstrumentSpec | None = None
         self._inst_ts = 0.0
+        self._m15: dict[datetime, Candle] = {}
 
     def instrument(self, force: bool = False) -> InstrumentSpec:
         if force or self._inst is None or time.monotonic() - self._inst_ts > 300:
@@ -78,6 +79,19 @@ class MarketDataService:
         log.error("Paire FX %s incohérente avec %s→%s", pair, quote_ccy, acct)
         return None
 
+    def m15_history(self, now: datetime) -> list[Candle]:
+        """≈ 35 jours de M15 (nécessaire au VWAP mensuel), mis à jour par incréments."""
+        from datetime import timedelta
+        if not self._m15 or (now - max(self._m15)).total_seconds() > 6 * 3600:
+            self._m15 = {c.time: c for c in self.client.get_candles_range(
+                self.epic, "M15", now - timedelta(days=35), now)}
+        else:
+            for c in self.client.get_candles(self.epic, "M15", max_bars=50):
+                self._m15[c.time] = c
+        cutoff = now - timedelta(days=40)
+        self._m15 = {t: c for t, c in self._m15.items() if t >= cutoff}
+        return [self._m15[t] for t in sorted(self._m15)]
+
     def account(self) -> AccountInfo | None:
         a = self.client.get_current_account()
         if a.currency != self.s.account_currency:
@@ -104,7 +118,7 @@ class MarketDataService:
             snap.fx_rate = attempt("fx", lambda: self.fx_rate(snap.instrument.currency))
         if with_candles:
             h4 = attempt("h4", lambda: self.client.get_candles(self.epic, "H4", max_bars=250))
-            m15 = attempt("m15", lambda: self.client.get_candles(self.epic, "M15", max_bars=1000))
+            m15 = attempt("m15", lambda: self.m15_history(now))
             m1 = attempt("m1", lambda: self.client.get_candles(self.epic, "M1", max_bars=300))
             snap.h4 = closed_only(h4 or [], "H4", now)
             snap.m15 = closed_only(m15 or [], "M15", now)

@@ -12,6 +12,8 @@ Méthode (documentée aussi dans docs/STRATEGY.md §VWAP) :
   - Session : reset à chaque nouveau jour de trading.
   - Hebdo : reset au premier jour de trading de la semaine ISO.
   - Mensuel : reset au premier jour de trading du mois.
+- Période incomplète : si le DÉBUT de la période n'a pas été observé (historique trop
+  court, ex. 10 jours de M15 pour un VWAP mensuel), le VWAP est INDISPONIBLE.
 - Fiabilité : si moins de `min_coverage` (90 %) des bougies de la période ont un
   volume > 0, ou si la période contient < 4 bougies, le VWAP est déclaré
   **INDISPONIBLE** (value=None) avec la raison. On ne calcule jamais un faux niveau
@@ -69,12 +71,15 @@ class VwapTracker:
         self._v: dict[str, float] = {k: 0.0 for k in self.KINDS}
         self._n: dict[str, int] = {k: 0 for k in self.KINDS}
         self._nvol: dict[str, int] = {k: 0 for k in self.KINDS}
+        self._complete: dict[str, bool] = {k: False for k in self.KINDS}
 
     def update(self, c: Candle) -> None:
         tp = (c.high + c.low + c.close) / 3.0
         for k in self.KINDS:
             key = anchor_key(c.time, k, self.reset_hour_utc)
             if key != self._key[k]:
+                # Le début de période n'est observé que si l'on a vu la transition.
+                self._complete[k] = self._key[k] is not None
                 self._key[k] = key
                 self._pv[k] = self._v[k] = 0.0
                 self._n[k] = self._nvol[k] = 0
@@ -92,6 +97,8 @@ class VwapTracker:
     def value(self, kind: str) -> VwapValue:
         n = self._n[kind]
         cov = (self._nvol[kind] / n) if n else 0.0
+        if not self._complete[kind]:
+            return VwapValue(kind, None, n, cov, "début de période non couvert par l'historique")
         if n < self.min_bars:
             return VwapValue(kind, None, n, cov, "période trop courte (< 4 bougies)")
         if self._v[kind] <= 0:

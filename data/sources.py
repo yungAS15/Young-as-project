@@ -149,7 +149,8 @@ def fetch_dukascopy_m1(start: datetime, end: datetime, cache_dir: str = "var/dat
 
 # ---------------------------------------------------------------------------
 # HistData.com (XAU/USD M1, BID, SANS volume) — un fichier par année (ou par mois
-# pour l'année en cours). Horodatage : EST fixe (UTC-5, sans heure d'été).
+# pour l'année en cours). Horodatage : heure de New York AVEC heure d'été (vérifié
+# contre Dukascopy : décalage UTC-5 en hiver, UTC-4 en été).
 # Volume toujours 0 → les VWAP sont « indisponibles » sur cette source (honnête).
 # ---------------------------------------------------------------------------
 HISTDATA_PAGE = "https://www.histdata.com/download-free-forex-historical-data/?/ascii/1-minute-bar-quotes/{pair}/{path}"
@@ -182,6 +183,8 @@ def fetch_histdata_zip(pair: str, year: int, month: int | None, dest_dir: str = 
 def parse_histdata_zip(path) -> list[Candle]:
     import io
     import zipfile
+    from zoneinfo import ZoneInfo
+    ny = ZoneInfo("America/New_York")
     out: list[Candle] = []
     with zipfile.ZipFile(path) as z:
         name = next(n for n in z.namelist() if n.endswith(".csv"))
@@ -189,7 +192,7 @@ def parse_histdata_zip(path) -> list[Candle]:
             parts = line.strip().split(";")
             if len(parts) < 5:
                 continue
-            t = datetime.strptime(parts[0], "%Y%m%d %H%M%S").replace(tzinfo=timezone.utc) + timedelta(hours=5)
+            t = datetime.strptime(parts[0], "%Y%m%d %H%M%S").replace(tzinfo=ny).astimezone(timezone.utc)
             o, h, lo, c = (float(x) for x in parts[1:5])
             out.append(Candle(t, o, h, lo, c, 0.0, 0.0))
     return out

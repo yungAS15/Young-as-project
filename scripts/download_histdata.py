@@ -1,7 +1,7 @@
 """Télécharge XAU/USD M1 depuis HistData.com (années complètes + mois de l'année en cours).
 
 Usage : python scripts/download_histdata.py 2018 2026 var/data/xauusd_m1_histdata.csv
-Source BID sans volume (VWAP indisponibles) ; heures converties de EST fixe vers UTC.
+Source BID sans volume (VWAP indisponibles) ; heures converties de New York (avec DST) vers UTC.
 """
 import sys
 import time

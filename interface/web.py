@@ -81,7 +81,8 @@ def serve(settings: Settings, db: Database, host: str | None = None, port: int |
     if host not in ("127.0.0.1", "localhost", "::1") and not allow_remote:
         raise SystemExit("Refus : l'interface ne doit écouter que sur 127.0.0.1")
     token = secrets.token_urlsafe(16)
-    approvals = ApprovalManager(db, settings)
+    from monitoring.alerts import build_notifier
+    approvals = ApprovalManager(db, settings, notifier=build_notifier(settings, db, console=False))
 
     class Handler(BaseHTTPRequestHandler):
         def _send(self, body: str, code: int = 200) -> None:
